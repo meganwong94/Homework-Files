@@ -1,0 +1,402 @@
+#include <iostream>
+#include <string>
+#include <ctime>
+#include <list>
+using namespace std;
+
+// class Card prototype ----------------------------------------
+class Card
+{
+public:
+   enum Suit { clubs, diamonds, hearts, spades };
+   static char DEFAULT_VAL;
+   static Suit DEFAULT_SUIT;
+   static const int NUM_CARD_VALS = 13;
+   static const int NUM_CARD_SUITS = 4;
+
+private:
+   char value;
+   Suit suit;
+   bool errorFlag;
+
+public:
+   Card(char value = DEFAULT_VAL, Suit suit = DEFAULT_SUIT);
+   string toString();
+   bool set(char value = DEFAULT_VAL, Suit suit = DEFAULT_SUIT);
+
+   char getVal() { return value; }
+   Suit getSuit() { return suit; }
+   bool getErrorFlag() { return errorFlag; }
+   bool equals(Card card);
+
+   const static char valueRanks[NUM_CARD_VALS];
+   const static Suit suitRanks[NUM_CARD_SUITS];
+
+   int compareTo(Card &other);
+   static int getSuitRank(Suit st);
+   static int getValueRank(char val);
+
+   // helpers
+private:
+   bool isValid(char value, Suit suit);
+};
+
+char Card::DEFAULT_VAL = 'A';
+Card::Suit Card::DEFAULT_SUIT = Card::spades;
+
+typedef list<Card> CardList;
+void showList(CardList &myList);
+void insert(CardList &myList, Card &x);
+bool remove(CardList &myList, Card &x);
+bool removeAll(CardList &myList, Card &x);
+
+int operator==(Card first, Card other)
+   { return first.compareTo(other) == 0; }
+Card generateRandomCard();
+const char Card::valueRanks[NUM_CARD_VALS]   // const forces correct # initializers
+   = { '2', '3', '4', '5', '6', '7', '8', '9', 'T',
+   'J', 'Q', 'K', 'A'};
+const Card::Suit Card::suitRanks[NUM_CARD_SUITS] = {Card::clubs, Card::diamonds,
+   Card::hearts, Card::spades};
+
+// class Hand prototype ----------------------------------------
+class Hand
+{
+public:
+   // need this in-line for array declaration
+   static const int MAX_CARDS_PER_HAND = 50; // should be enough for any game
+
+private:
+   Card myCards[MAX_CARDS_PER_HAND];
+   int numCards;
+
+public:
+   Hand() { resetHand(); }
+
+   // mutators
+   void resetHand() { numCards = 0; }
+   bool takeCard(Card card);
+   Card playCard();
+
+   // accessors
+   string toString();
+   int getNumCards() { return numCards; }
+   Card inspectCard(int k);
+};
+
+// main client --------------------------------------------------------
+int main()
+{
+   CardList myList;
+   Card card1, card2, card3, card4, card5, card6, card7, card8, card9, card10;
+
+   card1 = generateRandomCard();
+   card2 = card1;
+   card3 = generateRandomCard();
+   card4 = card3;
+   card5 = generateRandomCard();
+   card6 = card5;
+   card7 = generateRandomCard();
+   card8 = card7;
+   card9 = generateRandomCard();
+   card10 = card9;
+   insert(myList, card1);
+   insert(myList, card2);
+   insert(myList, card3);
+   insert(myList, card4);
+   insert(myList, card5);
+   insert(myList, card6);
+   insert(myList, card7);
+   insert(myList, card8);
+   insert(myList, card9);
+   insert(myList, card10);
+
+   showList(myList);
+
+   while (remove(myList, card1))
+      remove(myList, card1);
+
+   while (remove(myList, card8))
+      remove(myList, card8);
+
+   showList(myList);
+
+   if (removeAll(myList, card3))
+   {
+      cout << "True!" << endl;
+      removeAll(myList, card3);
+   }
+
+   showList(myList);
+}
+
+// beginning of Card method definitions ----------------------------------------
+// constructor
+Card::Card(char value, Suit suit)
+{
+   // because mutator sets errorFlag, we don't have to test
+   set(value, suit);
+}
+
+// stringizer
+string Card::toString()
+{
+   string retVal = " ";  // just enough space for the value char
+
+   if (errorFlag)
+      return "** illegal **";
+
+   // convert char to a string
+   retVal[0] = value;
+
+   if (suit == spades)
+      retVal += " of Spades";
+   else if (suit == hearts)
+      retVal += " of Hearts";
+   else if (suit == diamonds)
+      retVal += " of Diamonds";
+   else if (suit == clubs)
+      retVal += " of Clubs";
+
+   return retVal;
+}
+
+// mutator
+bool Card::set(char value, Suit suit)
+{
+   char upVal;
+
+   // convert to uppercase to simplify (may need to #include <cctype>)
+   upVal = toupper((int)value);
+
+   if ( !isValid(upVal, suit))
+   {
+      errorFlag = true;
+      return false;
+   }
+
+   // else implied
+   errorFlag = false;
+   this->value = upVal;
+   this->suit = suit;
+   return true;
+}
+
+// helper
+bool Card::isValid(char value, Suit suit)
+{
+   string upVal = "_";  // string to hold the 1-char value
+   string legalVals = "23456789TJQKA";
+
+   // convert to uppercase to simplify
+   upVal[0] = toupper((int)value);
+
+   // check for validity
+   if ( legalVals.find(upVal) != string::npos )
+      return true;
+   else
+      return false;
+}
+
+bool Card::equals(Card card)
+{
+   if (this->value != card.value)
+      return false;
+   if (this->suit != card.suit)
+      return false;
+   if (this->errorFlag != card.errorFlag)
+      return false;
+   return true;
+}
+
+Card generateRandomCard()
+{
+   Card::Suit suit;
+   char val;
+
+   suit = (Card::Suit) ( rand() % Card::NUM_CARD_SUITS );
+   val = Card::valueRanks[ rand() % Card::NUM_CARD_VALS ];
+
+   return Card(val, suit);
+}
+
+// Card comparison method definitions -------------------------------------------
+int Card::compareTo(Card &other)
+{
+   if (this->value == other.value)
+      return ( getSuitRank(this->suit) - getSuitRank(other.suit) );
+   // else
+   return getValueRank(this->value) - getValueRank(other.value) ;
+}
+
+int Card::getSuitRank(Suit st)
+{
+   int k;
+
+   for (k = 0; k < NUM_CARD_SUITS; k++)
+      if (suitRanks[k] == st)
+         return k;
+
+   // should not happen
+   return 0;
+}
+
+int Card::getValueRank(char val)
+{
+   int k;
+
+   for (k = 0; k < NUM_CARD_VALS; k++)
+      if (valueRanks[k] == val)
+         return k;
+
+   // should not happen
+   return 0;
+}
+
+// end of Card method definitions ----------------------------------------
+
+void insert(CardList &myList, Card &x)
+{
+   list<Card>::iterator iter;
+
+   for (iter = myList.begin(); iter != myList.end(); iter++)
+      if (x.compareTo(*iter) < 0)
+         break;
+   myList.insert(iter, x);
+}
+
+bool remove(CardList &myList, Card &x)
+{
+   list<Card>::iterator iter;
+
+   for (iter = myList.begin(); iter != myList.end(); iter++)
+      if (x.compareTo(*iter) == 0)
+      {
+         myList.erase(iter);
+         return true;
+      }
+   return false;
+}
+
+bool removeAll(CardList &myList, Card &x)
+{
+   list<Card>::iterator iter;
+
+   for (iter = myList.begin(); iter != myList.end(); iter++)
+      if (x.compareTo(*iter) == 0)
+      {
+         myList.remove(x);
+         return true;
+      }
+   return false;
+}
+
+void showList(CardList &myList)
+{
+   list<Card>::iterator iter;
+
+   cout << endl << "_____Here's the List_____" << endl;
+   for (iter = myList.begin(); iter != myList.end(); iter++)
+   {
+      cout << "[" << iter->toString() << "]" << endl;
+   }
+   cout << endl << "_____That's all!_____" << endl << endl;
+}
+
+// beginning of Hand method definitions ----------------------------------------
+bool Hand::takeCard(Card card)
+{
+   if (numCards >= MAX_CARDS_PER_HAND)
+      return false;
+
+   // check for valid card - spec says to return true at this point even if invalid
+   if (card.getErrorFlag())
+      return true;
+
+   myCards[numCards++] = card;
+   return true;
+}
+
+Card Hand::playCard()
+{
+   // always play highest card in array.  client will prepare this position.
+   // in rare case that client tries to play from a spent hand, return error
+
+   Card errorReturn(0, Card::spades); // in rare cases
+
+   if (numCards == 0)
+      return errorReturn;
+   else
+      return myCards[--numCards];
+}
+
+Card Hand::inspectCard(int k)
+{
+   // return copy of card at position k.
+   // if client tries to access out-of-bounds card, return error
+
+   Card errorReturn(0, Card::spades); // force errorFlag, in rare cases
+
+   if (k < 0 || k >= numCards)
+      return errorReturn;
+   else
+      return myCards[k];
+}
+
+string Hand::toString()
+{
+   int k;
+   string retVal = "Hand =  ( ";
+
+   for (k = 0; k < numCards; k++)
+   {
+      retVal += myCards[k].toString();
+      if (k < numCards - 1)
+         retVal += ", ";
+   }
+   retVal += " )";
+   return retVal;
+}
+// end of Hand method definitions ------------------------------------
+
+
+/* ----------------------- run ------------------------
+ 
+
+ _____Here's the List_____
+ [5 of Clubs]
+ [5 of Clubs]
+ [6 of Spades]
+ [6 of Spades]
+ [J of Spades]
+ [J of Spades]
+ [Q of Diamonds]
+ [Q of Diamonds]
+ [K of Hearts]
+ [K of Hearts]
+
+ _____That's all!_____
+
+
+ _____Here's the List_____
+ [J of Spades]
+ [J of Spades]
+ [Q of Diamonds]
+ [Q of Diamonds]
+ [K of Hearts]
+ [K of Hearts]
+
+ _____That's all!_____
+
+ True!
+
+ _____Here's the List_____
+ [J of Spades]
+ [J of Spades]
+ [K of Hearts]
+ [K of Hearts]
+ 
+ _____That's all!_____
+ 
+
+--------------------------------------*/

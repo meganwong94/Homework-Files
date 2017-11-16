@@ -1,0 +1,874 @@
+#include <iostream>
+using namespace std;
+
+class BooleanFunc
+{
+private:
+   int tableSize;
+   bool *truthTable = NULL;
+   bool evalReturnIfError;
+   bool state;
+public:
+   static const int MAX_TABLE_FOR_CLASS = 65536;
+   static const int DEFAULT_TABLE_SIZE = 16;
+
+   BooleanFunc(int tableSize = DEFAULT_TABLE_SIZE, bool evalReturnIfError = false);
+   BooleanFunc(BooleanFunc &boolFunc);
+   ~BooleanFunc();
+   BooleanFunc & operator=(const BooleanFunc & boolFunc);
+   bool setTruthTableUsingTrue(int inputsThatProduceTrue[], int arraySize);
+   bool setTruthTableUsingFalse(int inputsThatProduceFalse[], int arraySize);
+   bool eval(int input);
+   bool getState() { return state; }
+   void allocateCleanArray();
+   void deallocateArray();
+};
+
+class MultiSegmentLogic
+{
+protected:
+   int numSegs;
+   BooleanFunc *segs = NULL;
+public:
+   MultiSegmentLogic(int numSegs = 0);
+   MultiSegmentLogic(MultiSegmentLogic &multiSeg);
+   ~MultiSegmentLogic();
+   MultiSegmentLogic & operator=(const MultiSegmentLogic & multiSeg);
+   bool setNumSegs(int numSegs);
+   bool setSegment(int segNum, BooleanFunc funcForThisSeg);
+   void eval(int input);
+   void allocateCleanArray();
+   void deallocateArray();
+};
+
+class SevenSegmentLogic : public MultiSegmentLogic
+{
+
+public:
+   SevenSegmentLogic();
+   bool getValOfSeg(int seg);
+   void loadSegs();
+};
+
+class SevenSegmentImage
+{
+public:
+   static const int MIN_HEIGHT = 5;
+   static const int MIN_WIDTH = 5;
+   static const int MAX_HEIGHT = 65;
+   static const int MAX_WIDTH = 41;
+   static const string DRAW_CHAR;
+   static const string BLANK_CHAR;
+private:
+   bool **data = NULL;
+   int topRow, midRow, bottomRow, leftCol, rightCol;
+public:
+   SevenSegmentImage(int width = MIN_WIDTH, int height = MIN_HEIGHT);
+   ~SevenSegmentImage()
+   {
+      deallocateArray();
+   }
+   void clearImage();
+   bool turnOnCellsForSegment(char segment);
+   bool setSize(int width, int height);
+   void display();
+   SevenSegmentImage(const SevenSegmentImage &tdi);
+   const SevenSegmentImage &operator=(const SevenSegmentImage &rhs);
+private:
+   static bool validateSize(int width, int height);
+   void allocateCleanArray();
+   void deallocateArray();
+   void drawHorizontal(int row);
+   void drawVertical(int col, int startRow, int stopRow);
+};
+
+const string SevenSegmentImage::DRAW_CHAR = "*";
+const string SevenSegmentImage::BLANK_CHAR = " ";
+
+class SevenSegmentDisplay
+{
+private:
+   SevenSegmentImage theImage;
+   SevenSegmentLogic theDisplay;
+public:
+   SevenSegmentDisplay (
+      int width = SevenSegmentImage::MIN_WIDTH,
+      int height = SevenSegmentImage::MIN_HEIGHT
+      );
+   bool setSize(int width, int height);
+   void loadConsoleImage();
+   void consoleDisplay();
+   void eval(int input);
+};
+
+int main()
+{
+   SevenSegmentImage ssi;
+
+   ssi.setSize( 7, 9 );
+   ssi.turnOnCellsForSegment( 'a' );
+   ssi.display();
+   ssi.turnOnCellsForSegment( 'b' );
+   ssi.display();
+   ssi.turnOnCellsForSegment( 'c' );
+   ssi.display();
+   ssi.turnOnCellsForSegment( 'd' );
+   ssi.display();
+
+   ssi.clearImage();
+   ssi.turnOnCellsForSegment( 'e' );
+   ssi.display();
+   ssi.turnOnCellsForSegment( 'f' );
+   ssi.display();
+   ssi.turnOnCellsForSegment( 'g' );
+   ssi.display();
+
+   ssi.clearImage();
+   ssi.turnOnCellsForSegment( 'x' );
+   ssi.display();
+   ssi.turnOnCellsForSegment( '3' );
+   ssi.display();
+
+   SevenSegmentDisplay my7SegForCon(15, 13);
+
+   my7SegForCon.setSize(5, 5);
+   for (int j = 0; j < 16; j++)
+   {
+      my7SegForCon.eval(j);
+      my7SegForCon.loadConsoleImage();
+      my7SegForCon.consoleDisplay();
+   }
+}
+
+BooleanFunc::BooleanFunc(int tableSize, bool evalReturnIfError)
+{
+   this->tableSize = tableSize;
+   this->evalReturnIfError = evalReturnIfError;
+   state = evalReturnIfError;
+   truthTable = NULL;
+   allocateCleanArray();
+}
+
+BooleanFunc::BooleanFunc(BooleanFunc &boolFunc)
+{
+   tableSize = boolFunc.tableSize;
+   evalReturnIfError = boolFunc.evalReturnIfError;
+   state = boolFunc.state;
+   truthTable = NULL;
+   allocateCleanArray();
+
+   for (int i = 0; i < tableSize; i++)
+   {
+      truthTable[i] = boolFunc.truthTable[i];
+   }
+}
+
+BooleanFunc::~BooleanFunc()
+{
+   deallocateArray();
+}
+
+BooleanFunc & BooleanFunc::operator=(const BooleanFunc & boolFunc)
+{
+   if (this!= &boolFunc)
+   {
+      deallocateArray();
+      this->tableSize = boolFunc.tableSize;
+      truthTable = NULL;
+      allocateCleanArray();
+      for (int i = 0; i < tableSize; i++)
+      {
+         truthTable[i] = boolFunc.truthTable[i];
+      }
+      this->evalReturnIfError = boolFunc.evalReturnIfError;
+      this->state = boolFunc.state;
+   }
+   return *this;
+}
+
+bool BooleanFunc::setTruthTableUsingTrue(int inputsThatProduceTrue[], int arraySize)
+{
+
+   if (arraySize > tableSize)
+   {
+      return false;
+   }
+
+   else
+   {
+      int k, i, storePos;
+
+      for (i = 0; i < tableSize; i++)
+      {
+         truthTable[i] = false;
+      }
+
+      for (k = 0; k < arraySize; k++)
+      {
+         storePos = inputsThatProduceTrue[k];
+         truthTable[storePos] = true;
+      }
+      return true;
+   }
+}
+
+bool BooleanFunc::setTruthTableUsingFalse(int inputsThatProduceTrue[], int arraySize)
+{
+   if (arraySize > tableSize)
+   {
+      return false;
+   }
+
+   else
+   {
+      int k, i, storePos;
+
+      for (i = 0; i < tableSize; i++)
+      {
+         truthTable[i] = true;
+      }
+
+      for (k = 0; k < arraySize; k++)
+      {
+         storePos = inputsThatProduceTrue[k];
+         truthTable[storePos] = false;
+      }
+      return true;
+   }
+}
+
+bool BooleanFunc::eval(int input)
+{
+   if (input > tableSize)
+   {
+      evalReturnIfError = true;
+      state = evalReturnIfError;
+      return evalReturnIfError;
+   }
+   else
+   {
+      state = truthTable[input];
+      return state;
+   }
+}
+
+void BooleanFunc::allocateCleanArray()
+{
+   if (truthTable != NULL)
+   {
+      deallocateArray();
+   }
+   else
+   {
+      truthTable = new bool [tableSize];
+   }
+}
+
+void BooleanFunc::deallocateArray()
+{
+   if (truthTable == NULL)
+      return;
+
+   else
+   {
+      delete[] truthTable;
+      truthTable = NULL;
+   }
+}
+
+MultiSegmentLogic::MultiSegmentLogic(int numSegs)
+{
+   setNumSegs(numSegs);
+}
+
+MultiSegmentLogic::MultiSegmentLogic(MultiSegmentLogic &multiSeg)
+{
+   setNumSegs(multiSeg.numSegs);
+   for (int i = 0; i < numSegs; i++)
+   {
+      segs[i] = multiSeg.segs[i];
+   }
+}
+
+MultiSegmentLogic::~MultiSegmentLogic()
+{
+   deallocateArray();
+}
+
+MultiSegmentLogic & MultiSegmentLogic::operator=(const MultiSegmentLogic & multiSeg)
+{
+   if (this!= &multiSeg)
+   {
+      this->numSegs = multiSeg.numSegs;
+      segs = NULL;
+      allocateCleanArray();
+      for (int i = 0; i < numSegs; i++)
+      {
+         segs[i] = multiSeg.segs[i];
+      }
+   }
+   return *this;
+}
+
+bool MultiSegmentLogic::setNumSegs(int numSegs)
+{
+   if (numSegs < 0)
+      return false;
+
+   else
+   {
+      deallocateArray();
+
+      this->numSegs = numSegs;
+      segs = NULL;
+      allocateCleanArray();
+      return true;
+   }
+}
+
+bool MultiSegmentLogic::setSegment(int segNum, BooleanFunc funcForThisSeg)
+{
+   if (segNum < 0)
+      return false;
+
+   else
+   {
+      segs[segNum] = funcForThisSeg;
+      return true;
+   }
+}
+
+void MultiSegmentLogic::eval(int input)
+{
+   int k;
+
+   for (k = 0; k < numSegs; k++)
+   {
+      segs[k].eval(input);
+   }
+}
+
+void MultiSegmentLogic::allocateCleanArray()
+{
+   if (segs != NULL)
+      deallocateArray();
+
+   else
+   {
+      segs = new BooleanFunc [numSegs];
+   }
+}
+
+void MultiSegmentLogic::deallocateArray()
+{
+   if (segs == NULL)
+      return;
+
+   else
+   {
+      delete[] segs;
+      segs = NULL;
+   }
+}
+
+SevenSegmentLogic::SevenSegmentLogic()
+{
+   setNumSegs(7);
+   loadSegs();
+}
+
+bool SevenSegmentLogic::getValOfSeg(int seg)
+{
+   if (seg < 0)
+      return false;
+
+   else
+      return segs[seg].getState();
+}
+
+void SevenSegmentLogic::loadSegs()
+{
+   int aFunc[] = { 1, 4, 11, 13 };
+   short sizeAFunc = sizeof(aFunc) / sizeof(aFunc[0]);
+
+   int bFunc[] = { 5, 6, 11, 12, 14, 15 };
+   short sizeBFunc = sizeof(bFunc) / sizeof(bFunc[0]);
+
+   int cFunc[] = { 2, 12, 14, 15 };
+   short sizeCFunc = sizeof(cFunc) / sizeof(cFunc[0]);
+
+   int dFunc[] = { 1, 4, 7, 10, 15 };
+   short sizeDFunc = sizeof(dFunc) / sizeof(dFunc[0]);
+
+   int eFunc[] = { 1, 3, 4, 5, 7, 9 };
+   short sizeEFunc = sizeof(eFunc) / sizeof(eFunc[0]);
+
+   int fFunc[] = { 1, 2, 3, 7, 13 };
+   short sizeFFunc = sizeof(fFunc) / sizeof(fFunc[0]);
+
+   int gFunc[] = { 0, 1, 7, 12 };
+   short sizeGFunc = sizeof(gFunc) / sizeof(gFunc[0]);
+
+   segs[0].setTruthTableUsingFalse(aFunc, sizeAFunc);
+   segs[1].setTruthTableUsingFalse(bFunc, sizeBFunc);
+   segs[2].setTruthTableUsingFalse(cFunc, sizeCFunc);
+   segs[3].setTruthTableUsingFalse(dFunc, sizeDFunc);
+   segs[4].setTruthTableUsingFalse(eFunc, sizeEFunc);
+   segs[5].setTruthTableUsingFalse(fFunc, sizeFFunc);
+   segs[6].setTruthTableUsingFalse(gFunc, sizeGFunc);
+
+   setSegment(0, segs[0]);
+   setSegment(1, segs[1]);
+   setSegment(2, segs[2]);
+   setSegment(3, segs[3]);
+   setSegment(4, segs[4]);
+   setSegment(5, segs[5]);
+   setSegment(6, segs[6]);
+}
+
+SevenSegmentImage::SevenSegmentImage(int width, int height)
+{
+   setSize(width, height);
+}
+
+SevenSegmentImage::SevenSegmentImage(const SevenSegmentImage &tdi)
+{
+   topRow = tdi.topRow;
+   midRow = tdi.midRow;
+   bottomRow = tdi.bottomRow;
+   leftCol = tdi.leftCol;
+   rightCol = tdi.rightCol;
+
+   data = NULL;
+   allocateCleanArray();
+
+   for (int row = 0; row <= topRow; row++)
+   {
+      for (int column = 0; column <= rightCol; column++)
+      {
+         data[row][column] = tdi.data[row][column];
+      }
+   }
+}
+
+const SevenSegmentImage & SevenSegmentImage::operator=(const SevenSegmentImage &rhs)
+{
+   if (this!= &rhs)
+   {
+      deallocateArray();
+      this->topRow = rhs.topRow;
+      this->midRow = rhs.midRow;
+      this->bottomRow = rhs.bottomRow;
+      this->leftCol = rhs.leftCol;
+      this->rightCol = rhs.rightCol;
+      data = NULL;
+      allocateCleanArray();
+      for (int row = 0; row <= topRow; row++)
+      {
+         for (int column = 0; column <= rightCol; column++)
+         {
+            data[row][column] = rhs.data[row][column];
+         }
+      }
+   }
+   return *this;
+}
+
+void SevenSegmentImage::clearImage()
+{
+   for (int row = 0; row <= topRow; row++)
+   {
+      for(int column = 0; column <= rightCol; column++)
+      {
+         data[row][column] = false;
+      }
+   }
+}
+
+bool SevenSegmentImage::validateSize(int width, int height)
+{
+   if (width < MIN_WIDTH || width > MAX_WIDTH || height % 2 == 0 ||
+       height < MIN_HEIGHT || height > MAX_HEIGHT)
+          return false;
+
+   else
+      return true;
+}
+
+bool SevenSegmentImage::setSize(int width, int height)
+{
+   if (!validateSize(width, height))
+      return false;
+
+   else
+   {
+      if (data != NULL)
+         deallocateArray();
+      topRow = height - 1;
+      midRow = height / 2;
+      bottomRow = 0;
+      rightCol = width - 1;
+      leftCol = 0;
+
+      allocateCleanArray();
+      return true;
+   }
+}
+
+bool SevenSegmentImage::turnOnCellsForSegment(char segment)
+{
+   if (segment == 'a' || segment == 'A')
+   {
+      drawHorizontal(topRow);
+      return true;
+   }
+
+   if (segment == 'b' || segment == 'B')
+   {
+      drawVertical(rightCol, midRow, topRow);
+      return true;
+   }
+
+   if (segment == 'c' || segment == 'C')
+   {
+      drawVertical(rightCol, bottomRow, midRow);
+      return true;
+   }
+
+   if (segment == 'd' || segment == 'D')
+   {
+      drawHorizontal(bottomRow);
+      return true;
+   }
+
+   if (segment == 'e' || segment == 'E')
+   {
+      drawVertical(leftCol, bottomRow, midRow);
+      return true;
+   }
+
+   if (segment == 'f' || segment == 'F')
+   {
+      drawVertical(leftCol, midRow, topRow);
+      return true;
+   }
+
+   if (segment == 'g' || segment == 'G')
+   {
+      drawHorizontal(midRow);
+      return true;
+   }
+
+   else
+      return false;
+}
+
+void SevenSegmentImage::display()
+{
+   string displayString;
+
+   for (int row = topRow; row >= bottomRow; row--)
+   {
+      for(int column = 0; column <= rightCol; column++)
+      {
+         if (data[row][column] == false)
+            displayString += BLANK_CHAR;
+         else
+            displayString += DRAW_CHAR;
+      }
+      displayString += "\n";
+   }
+
+   cout << displayString << endl;
+}
+
+void SevenSegmentImage::allocateCleanArray()
+{
+   if (data != NULL)
+      deallocateArray();
+
+   else
+   {
+      data = new bool* [topRow + 1];
+      for (int row = 0; row < topRow + 1; row++)
+      {
+         data[row] = new bool[rightCol + 1];
+      }
+   }
+}
+
+void SevenSegmentImage::deallocateArray()
+{
+   if (data == NULL)
+      return;
+   else
+   {
+      for (int row = 0; row < topRow + 1; row++)
+      {
+         delete[] data[row];
+      }
+      delete[] data;
+      data = NULL;
+   }
+}
+
+void SevenSegmentImage::drawHorizontal(int row)
+{
+   for (int column = 0; column <= rightCol; column++)
+      {
+         data[row][column] = true;
+      }
+}
+
+void SevenSegmentImage::drawVertical(int col, int startRow, int stopRow)
+{
+   for (int row = startRow; row <= stopRow; row++)
+   {
+      data[row][col] = true;
+   }
+}
+
+SevenSegmentDisplay::SevenSegmentDisplay(int width, int height)
+{
+   setSize(width, height);
+}
+
+bool SevenSegmentDisplay::setSize(int width, int height)
+{
+   if (!theImage.setSize(width, height))
+      return false;
+   else
+   {
+      theImage.setSize(width, height);
+      return true;
+   }
+}
+
+void SevenSegmentDisplay::eval(int input)
+{
+   theDisplay.eval(input);
+}
+
+void SevenSegmentDisplay::loadConsoleImage()
+{
+   theImage.clearImage();
+
+   if (theDisplay.getValOfSeg(0) == true)
+      theImage.turnOnCellsForSegment('a');
+
+   if (theDisplay.getValOfSeg(1) == true)
+      theImage.turnOnCellsForSegment('b');
+
+   if (theDisplay.getValOfSeg(2) == true)
+      theImage.turnOnCellsForSegment('c');
+
+   if (theDisplay.getValOfSeg(3) == true)
+      theImage.turnOnCellsForSegment('d');
+
+   if (theDisplay.getValOfSeg(4) == true)
+      theImage.turnOnCellsForSegment('e');
+
+   if (theDisplay.getValOfSeg(5) == true)
+      theImage.turnOnCellsForSegment('f');
+
+   if (theDisplay.getValOfSeg(6) == true)
+      theImage.turnOnCellsForSegment('g');
+}
+
+void SevenSegmentDisplay::consoleDisplay()
+{
+   theImage.display();
+}
+
+/* ----------------------------- run #1 -------------------------------
+ *******
+       
+       
+       
+       
+       
+       
+       
+       
+
+*******
+      *
+      *
+      *
+      *
+       
+       
+       
+       
+
+*******
+      *
+      *
+      *
+      *
+      *
+      *
+      *
+      *
+
+*******
+      *
+      *
+      *
+      *
+      *
+      *
+      *
+*******
+
+       
+       
+       
+       
+*      
+*      
+*      
+*      
+*      
+
+*      
+*      
+*      
+*      
+*      
+*      
+*      
+*      
+*      
+
+*      
+*      
+*      
+*      
+*******
+*      
+*      
+*      
+*      
+
+       
+       
+       
+       
+       
+       
+       
+       
+       
+
+       
+       
+       
+       
+       
+       
+       
+       
+       
+
+----------------------------------------------------------- */
+
+/* --------------------- run #2 -----------------------------
+
+*****
+*   *
+*   *
+*   *
+*****
+
+    *
+    *
+    *
+    *
+    *
+
+*****
+    *
+*****
+*
+*****
+
+*****
+    *
+*****
+    *
+*****
+
+*   *
+*   *
+*****
+    *
+    *
+
+*****
+*    
+*****
+    *
+*****
+
+*****
+*    
+*****
+*   *
+*****
+
+*****
+    *
+    *
+    *
+    *
+
+*****
+*   *
+*****
+*   *
+*****
+
+*****
+*   *
+*****
+    *
+*****
+
+*****
+*   *
+*****
+*   *
+*   *
+
+*    
+*    
+*****
+*   *
+*****
+
+*****
+*    
+*    
+*    
+*****
+
+    *
+    *
+*****
+*   *
+*****
+
+*****
+*    
+*****
+*    
+*****
+
+*****
+*    
+*****
+*    
+*    
+
+---------------------------------------------- */
