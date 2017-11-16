@@ -1,0 +1,673 @@
+#include <iostream>
+using namespace std;
+
+class BooleanFunc
+{
+private:
+   int tableSize;
+   bool *truthTable = NULL;
+   bool evalReturnIfError;
+   bool state;
+public:
+   static const int MAX_TABLE_FOR_CLASS = 65536;
+   static const int DEFAULT_TABLE_SIZE = 16;
+
+   BooleanFunc(int tableSize = DEFAULT_TABLE_SIZE, bool evalReturnIfError = false);
+   BooleanFunc(BooleanFunc &boolFunc);
+   ~BooleanFunc();
+   BooleanFunc & operator=(const BooleanFunc & boolFunc);
+   bool setTruthTableUsingTrue(int inputsThatProduceTrue[], int arraySize);
+   bool setTruthTableUsingFalse(int inputsThatProduceFalse[], int arraySize);
+   bool eval(int input);
+   bool getState() { return state; }
+   void allocateCleanArray();
+   void deallocateArray();
+};
+
+int main()
+{
+   BooleanFunc segA, segB(13), segC(100, true);
+
+   int evenFunc[] = { 0, 2, 4, 6, 8, 10, 12, 14 }, inputX;
+   short sizeEvenFunc = sizeof(evenFunc) / sizeof(evenFunc[0]);
+
+   int greater9Func[] = { 10, 11, 12, 13, 14, 15 };
+   short sizeGreater9Func = sizeof(greater9Func) / sizeof(greater9Func[0]);
+
+   int greater3Func[] = { 0, 1, 2, 3 };
+   short sizeGreater3Func = sizeof(greater3Func) / sizeof(greater3Func[0]);
+
+   segA.setTruthTableUsingTrue(evenFunc, sizeEvenFunc);
+   segB.setTruthTableUsingTrue(greater9Func, sizeGreater9Func);
+   segC.setTruthTableUsingFalse(greater3Func, sizeGreater3Func);
+
+   cout << "before eval()\n";
+   cout << "\n A(x) = " << segA.getState() << "\n B(x) = " << segB.getState()
+   << "\n C(x) = " << segC.getState() << endl << endl;
+
+   cout << "looping with eval()\n";
+   for (inputX = 0; inputX < 14; inputX++)
+   {
+      segA.eval(inputX);
+      segB.eval(inputX);
+      segC.eval(inputX);
+      cout << "Input: " << inputX << "\n A(x) = " << segA.getState()
+      << "\n B(x) = " << segB.getState() << "\n C(x) = "
+      << segC.getState() << endl << endl;
+   }
+   segA.eval(inputX);
+}
+
+BooleanFunc::BooleanFunc(int tableSize, bool evalReturnIfError)
+{
+   this->tableSize = tableSize;
+   this->evalReturnIfError = evalReturnIfError;
+   state = evalReturnIfError;
+   truthTable = NULL;
+   allocateCleanArray();
+}
+
+BooleanFunc::BooleanFunc(BooleanFunc &boolFunc)
+{
+   tableSize = boolFunc.tableSize;
+   evalReturnIfError = boolFunc.evalReturnIfError;
+   state = boolFunc.state;
+   truthTable = NULL;
+   allocateCleanArray();
+
+   for (int i = 0; i < tableSize; i++)
+   {
+      truthTable[i] = boolFunc.truthTable[i];
+   }
+}
+
+BooleanFunc::~BooleanFunc()
+{
+   deallocateArray();
+}
+
+BooleanFunc & BooleanFunc::operator=(const BooleanFunc & boolFunc)
+{
+   if (this!= &boolFunc)
+   {
+      deallocateArray();
+      this->tableSize = boolFunc.tableSize;
+      truthTable = NULL;
+      allocateCleanArray();
+      for (int i = 0; i < tableSize; i++)
+      {
+         truthTable[i] = boolFunc.truthTable[i];
+      }
+      this->evalReturnIfError = boolFunc.evalReturnIfError;
+      this->state = boolFunc.state;
+   }
+   return *this;
+}
+
+bool BooleanFunc::setTruthTableUsingTrue(int inputsThatProduceTrue[], int arraySize)
+{
+
+   if (arraySize > tableSize)
+   {
+      return false;
+   }
+
+   else
+   {
+      int k, i, storePos;
+
+      for (i = 0; i < tableSize; i++)
+      {
+         truthTable[i] = false;
+      }
+
+      for (k = 0; k < arraySize; k++)
+      {
+         storePos = inputsThatProduceTrue[k];
+         truthTable[storePos] = true;
+      }
+      return true;
+   }
+}
+
+bool BooleanFunc::setTruthTableUsingFalse(int inputsThatProduceTrue[], int arraySize)
+{
+   if (arraySize > tableSize)
+   {
+      return false;
+   }
+
+   else
+   {
+      int k, i, storePos;
+
+      for (i = 0; i < tableSize; i++)
+      {
+         truthTable[i] = true;
+      }
+
+      for (k = 0; k < arraySize; k++)
+      {
+         storePos = inputsThatProduceTrue[k];
+         truthTable[storePos] = false;
+      }
+      return true;
+   }
+}
+
+bool BooleanFunc::eval(int input)
+{
+   if (input > tableSize)
+   {
+      evalReturnIfError = true;
+      state = evalReturnIfError;
+      return evalReturnIfError;
+   }
+   else
+   {
+      state = truthTable[input];
+      return state;
+   }
+}
+
+void BooleanFunc::allocateCleanArray()
+{
+   int k;
+
+   if (truthTable != NULL)
+   {
+      deallocateArray();
+   }
+   else
+   {
+      truthTable = new bool [tableSize];
+   }
+}
+
+void BooleanFunc::deallocateArray()
+{
+   if (truthTable == NULL)
+      return;
+
+   else
+   {
+      delete[] truthTable;
+      truthTable = NULL;
+   }
+}
+
+/*-------------------------- run #1 -------------------------------
+
+ before eval()
+
+ A(x) = 0
+ B(x) = 0
+ C(x) = 1
+
+ looping with eval()
+ Input: 0
+ A(x) = 1
+ B(x) = 0
+ C(x) = 0
+
+ Input: 1
+ A(x) = 0
+ B(x) = 0
+ C(x) = 0
+
+ Input: 2
+ A(x) = 1
+ B(x) = 0
+ C(x) = 0
+
+ Input: 3
+ A(x) = 0
+ B(x) = 0
+ C(x) = 0
+
+ Input: 4
+ A(x) = 1
+ B(x) = 0
+ C(x) = 1
+
+ Input: 5
+ A(x) = 0
+ B(x) = 0
+ C(x) = 1
+
+ Input: 6
+ A(x) = 1
+ B(x) = 0
+ C(x) = 1
+
+ Input: 7
+ A(x) = 0
+ B(x) = 0
+ C(x) = 1
+
+ Input: 8
+ A(x) = 1
+ B(x) = 0
+ C(x) = 1
+
+ Input: 9
+ A(x) = 0
+ B(x) = 0
+ C(x) = 1
+
+ Input: 10
+ A(x) = 1
+ B(x) = 1
+ C(x) = 1
+
+ Input: 11
+ A(x) = 0
+ B(x) = 1
+ C(x) = 1
+
+ Input: 12
+ A(x) = 1
+ B(x) = 1
+ C(x) = 1
+
+ Input: 13
+ A(x) = 0
+ B(x) = 1
+ C(x) = 1
+
+--------------------------------------------------------*/
+
+#include <iostream>
+using namespace std;
+
+class BooleanFunc
+{
+private:
+   int tableSize;
+   bool *truthTable = NULL;
+   bool evalReturnIfError;
+   bool state;
+public:
+   static const int MAX_TABLE_FOR_CLASS = 65536;
+   static const int DEFAULT_TABLE_SIZE = 16;
+
+   BooleanFunc(int tableSize = DEFAULT_TABLE_SIZE, bool evalReturnIfError = false);
+   BooleanFunc(BooleanFunc &boolFunc);
+   ~BooleanFunc();
+   BooleanFunc & operator=(const BooleanFunc & boolFunc);
+   bool setTruthTableUsingTrue(int inputsThatProduceTrue[], int arraySize);
+   bool setTruthTableUsingFalse(int inputsThatProduceFalse[], int arraySize);
+   bool eval(int input);
+   bool getState() { return state; }
+   void allocateCleanArray();
+   void deallocateArray();
+};
+
+class MultiSegmentLogic
+{
+protected:
+   int numSegs;
+   BooleanFunc *segs = NULL;
+public:
+   MultiSegmentLogic(int numSegs = 0);
+   MultiSegmentLogic(MultiSegmentLogic &multiSeg);
+   ~MultiSegmentLogic();
+   MultiSegmentLogic & operator=(const MultiSegmentLogic & multiSeg);
+   bool setNumSegs(int numSegs);
+   bool setSegment(int segNum, BooleanFunc funcForThisSeg);
+   void eval(int input);
+   void allocateCleanArray();
+   void deallocateArray();
+};
+
+class SevenSegmentLogic : public MultiSegmentLogic
+{
+
+public:
+   SevenSegmentLogic();
+   bool getValOfSeg(int seg);
+   void loadSegs();
+};
+
+int main()
+{
+   int inputX, k;
+   SevenSegmentLogic my7Seg;
+   SevenSegmentLogic myCopy(my7Seg);
+
+   for (inputX = 0; inputX < 16; inputX++)
+   {
+      my7Seg.eval(inputX);
+      cout << "\n| ";
+      for (k = 0; k < 7; k++)
+         cout << my7Seg.getValOfSeg(k) << " | ";
+      cout << endl;
+   }
+
+}
+
+BooleanFunc::BooleanFunc(int tableSize, bool evalReturnIfError)
+{
+   this->tableSize = tableSize;
+   this->evalReturnIfError = evalReturnIfError;
+   state = evalReturnIfError;
+   truthTable = NULL;
+   allocateCleanArray();
+}
+
+BooleanFunc::BooleanFunc(BooleanFunc &boolFunc)
+{
+   tableSize = boolFunc.tableSize;
+   evalReturnIfError = boolFunc.evalReturnIfError;
+   state = boolFunc.state;
+   truthTable = NULL;
+   allocateCleanArray();
+
+   for (int i = 0; i < tableSize; i++)
+   {
+      truthTable[i] = boolFunc.truthTable[i];
+   }
+}
+
+BooleanFunc::~BooleanFunc()
+{
+   deallocateArray();
+}
+
+BooleanFunc & BooleanFunc::operator=(const BooleanFunc & boolFunc)
+{
+   if (this!= &boolFunc)
+   {
+      deallocateArray();
+      this->tableSize = boolFunc.tableSize;
+      truthTable = NULL;
+      allocateCleanArray();
+      for (int i = 0; i < tableSize; i++)
+      {
+         truthTable[i] = boolFunc.truthTable[i];
+      }
+      this->evalReturnIfError = boolFunc.evalReturnIfError;
+      this->state = boolFunc.state;
+   }
+   return *this;
+}
+
+bool BooleanFunc::setTruthTableUsingTrue(int inputsThatProduceTrue[], int arraySize)
+{
+
+   if (arraySize > tableSize)
+   {
+      return false;
+   }
+
+   else
+   {
+      int k, i, storePos;
+
+      for (i = 0; i < tableSize; i++)
+      {
+         truthTable[i] = false;
+      }
+
+      for (k = 0; k < arraySize; k++)
+      {
+         storePos = inputsThatProduceTrue[k];
+         truthTable[storePos] = true;
+      }
+      return true;
+   }
+}
+
+bool BooleanFunc::setTruthTableUsingFalse(int inputsThatProduceTrue[], int arraySize)
+{
+   if (arraySize > tableSize)
+   {
+      return false;
+   }
+
+   else
+   {
+      int k, i, storePos;
+
+      for (i = 0; i < tableSize; i++)
+      {
+         truthTable[i] = true;
+      }
+
+      for (k = 0; k < arraySize; k++)
+      {
+         storePos = inputsThatProduceTrue[k];
+         truthTable[storePos] = false;
+      }
+      return true;
+   }
+}
+
+bool BooleanFunc::eval(int input)
+{
+   if (input > tableSize)
+   {
+      evalReturnIfError = true;
+      state = evalReturnIfError;
+      return evalReturnIfError;
+   }
+   else
+   {
+      state = truthTable[input];
+      return state;
+   }
+}
+
+void BooleanFunc::allocateCleanArray()
+{
+   int k;
+
+   if (truthTable != NULL)
+   {
+      deallocateArray();
+   }
+   else
+   {
+      truthTable = new bool [tableSize];
+   }
+}
+
+void BooleanFunc::deallocateArray()
+{
+   if (truthTable == NULL)
+      return;
+
+   else
+   {
+      delete[] truthTable;
+      truthTable = NULL;
+   }
+}
+
+MultiSegmentLogic::MultiSegmentLogic(int numSegs)
+{
+   setNumSegs(numSegs);
+}
+
+MultiSegmentLogic::MultiSegmentLogic(MultiSegmentLogic &multiSeg)
+{
+   setNumSegs(multiSeg.numSegs);
+   for (int i = 0; i < numSegs; i++)
+   {
+      segs[i] = multiSeg.segs[i];
+   }
+}
+
+MultiSegmentLogic::~MultiSegmentLogic()
+{
+   deallocateArray();
+}
+
+MultiSegmentLogic & MultiSegmentLogic::operator=(const MultiSegmentLogic & multiSeg)
+{
+   if (this!= &multiSeg)
+   {
+      this->numSegs = multiSeg.numSegs;
+      segs = NULL;
+      allocateCleanArray();
+      for (int i = 0; i < numSegs; i++)
+      {
+         segs[i] = multiSeg.segs[i];
+      }
+   }
+   return *this;
+}
+
+bool MultiSegmentLogic::setNumSegs(int numSegs)
+{
+   if (numSegs < 0)
+      return false;
+
+   else
+   {
+      deallocateArray();
+
+      this->numSegs = numSegs;
+      segs = NULL;
+      allocateCleanArray();
+      return true;
+   }
+}
+
+bool MultiSegmentLogic::setSegment(int segNum, BooleanFunc funcForThisSeg)
+{
+   if (segNum < 0)
+      return false;
+
+   else
+   {
+      segs[segNum] = funcForThisSeg;
+      return true;
+   }
+}
+
+void MultiSegmentLogic::eval(int input)
+{
+   int k;
+
+   for (k = 0; k < numSegs; k++)
+   {
+      segs[k].eval(input);
+   }
+}
+
+void MultiSegmentLogic::allocateCleanArray()
+{
+   if (segs != NULL)
+      deallocateArray();
+
+   else
+   {
+      segs = new BooleanFunc [numSegs];
+   }
+}
+
+void MultiSegmentLogic::deallocateArray()
+{
+   if (segs == NULL)
+      return;
+
+   else
+   {
+      delete[] segs;
+      segs = NULL;
+   }
+}
+
+SevenSegmentLogic::SevenSegmentLogic()
+{
+   setNumSegs(7);
+   loadSegs();
+}
+
+bool SevenSegmentLogic::getValOfSeg(int seg)
+{
+   if (seg < 0)
+      return false;
+
+   else
+      return segs[seg].getState();
+}
+
+void SevenSegmentLogic::loadSegs()
+{
+   int aFunc[] = { 1, 4, 11, 13 };
+   short sizeAFunc = sizeof(aFunc) / sizeof(aFunc[0]);
+
+   int bFunc[] = { 5, 6, 11, 12, 14, 15 };
+   short sizeBFunc = sizeof(bFunc) / sizeof(bFunc[0]);
+
+   int cFunc[] = { 2, 12, 14, 15 };
+   short sizeCFunc = sizeof(cFunc) / sizeof(cFunc[0]);
+
+   int dFunc[] = { 1, 4, 7, 10, 15 };
+   short sizeDFunc = sizeof(dFunc) / sizeof(dFunc[0]);
+
+   int eFunc[] = { 1, 3, 4, 5, 7, 9 };
+   short sizeEFunc = sizeof(eFunc) / sizeof(eFunc[0]);
+
+   int fFunc[] = { 1, 2, 3, 7, 13 };
+   short sizeFFunc = sizeof(fFunc) / sizeof(fFunc[0]);
+
+   int gFunc[] = { 0, 1, 7, 13 };
+   short sizeGFunc = sizeof(gFunc) / sizeof(gFunc[0]);
+
+   segs[0].setTruthTableUsingFalse(aFunc, sizeAFunc);
+   segs[1].setTruthTableUsingFalse(bFunc, sizeBFunc);
+   segs[2].setTruthTableUsingFalse(cFunc, sizeCFunc);
+   segs[3].setTruthTableUsingFalse(dFunc, sizeDFunc);
+   segs[4].setTruthTableUsingFalse(eFunc, sizeEFunc);
+   segs[5].setTruthTableUsingFalse(fFunc, sizeFFunc);
+   segs[6].setTruthTableUsingFalse(gFunc, sizeGFunc);
+
+   setSegment(0, segs[0]);
+   setSegment(1, segs[1]);
+   setSegment(2, segs[2]);
+   setSegment(3, segs[3]);
+   setSegment(4, segs[4]);
+   setSegment(5, segs[5]);
+   setSegment(6, segs[6]);
+}
+
+/*-------------------------- run #2 -------------------------------
+
+
+ | 1 | 1 | 1 | 1 | 1 | 1 | 0 |
+
+ | 0 | 1 | 1 | 0 | 0 | 0 | 0 |
+
+ | 1 | 1 | 0 | 1 | 1 | 0 | 1 |
+
+ | 1 | 1 | 1 | 1 | 0 | 0 | 1 |
+
+ | 0 | 1 | 1 | 0 | 0 | 1 | 1 |
+
+ | 1 | 0 | 1 | 1 | 0 | 1 | 1 |
+
+ | 1 | 0 | 1 | 1 | 1 | 1 | 1 |
+
+ | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
+
+ | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+
+ | 1 | 1 | 1 | 1 | 0 | 1 | 1 |
+
+ | 1 | 1 | 1 | 0 | 1 | 1 | 1 |
+
+ | 0 | 0 | 1 | 1 | 1 | 1 | 1 |
+
+ | 1 | 0 | 0 | 1 | 1 | 1 | 1 |
+
+ | 0 | 1 | 1 | 1 | 1 | 0 | 0 |
+
+ | 1 | 0 | 0 | 1 | 1 | 1 | 1 |
+
+ | 1 | 0 | 0 | 0 | 1 | 1 | 1 | 
+
+
+--------------------------------------------------------*/

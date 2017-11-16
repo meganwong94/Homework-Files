@@ -1,0 +1,407 @@
+#include <string>
+#include <iostream>
+#include <sstream>
+using namespace std;
+
+class Card
+{
+public:
+   enum Suit { clubs, diamonds, hearts, spades };
+private:
+   char value;
+   Suit suit;
+   bool errorFlag;
+public:
+   Card(char value = 'A', Suit suit = spades);
+   string toString();
+
+   bool set(char value, Suit suit);
+
+   char getVal() { return value; }
+   Suit getSuit() { return suit; }
+   bool getErrorFlag() { return errorFlag; }
+
+   bool equals(Card card);
+private:
+   static bool isValid(char value, Suit suit);
+};
+
+
+int main()
+{
+   Card card1, card2('z', Card::hearts), card3('T', Card::clubs);
+
+   cout << card1.toString() << endl << card2.toString() << endl
+   << card3.toString() << endl << endl;
+
+   card1.set('1', Card::spades);
+   card2.set('9', Card::hearts);
+
+   cout << card1.toString() << endl << card2.toString() << endl
+   << card3.toString() << endl << endl;
+}
+
+Card::Card(char value, Suit suit)
+{
+   set(value, suit);
+}
+
+string Card::toString()
+{
+   if(errorFlag)
+      return "[invalid]";
+   else
+   {
+   string retVal;
+   char strVal[2];
+
+   strVal[0] = value;
+   strVal[1] = '\0';
+
+   retVal = string(strVal);
+
+   if (suit == spades)
+      retVal += " of Spades";
+   else if (suit == hearts)
+      retVal += " of Hearts";
+   else if (suit == diamonds)
+      retVal += " of Diamonds";
+   else if (suit == clubs)
+      retVal += " of Clubs";
+
+   return retVal;
+   }
+}
+
+bool Card::set(char value, Suit suit)
+{
+   if (!isValid(value, suit))
+   {
+
+      errorFlag = true;
+      return false;
+   }
+
+   this->value = value;
+   this->suit = suit;
+   errorFlag = false;
+   return true;
+}
+
+bool Card::equals(Card card)
+{
+   if (this->value == value && this->suit == suit)
+      return true;
+   return false;
+}
+
+bool Card::isValid(char value, Suit suit)
+{
+   char upVal;
+
+   upVal = toupper((int)value);
+
+   if(upVal == 'A' || upVal == 'K'
+      || upVal == 'Q' || upVal == 'J'
+      || upVal == 'T' || (upVal >= '2' && upVal <= '9'))
+   {
+      value = upVal;
+      return true;
+   }
+   else
+      return false;
+}
+
+/*----------------- run #1 --------------------------
+ 
+ A of Spades
+ [invalid]
+ T of Clubs
+
+ [invalid]
+ 9 of Hearts
+ T of Clubs
+ 
+ ----------------------------------------------------*/
+
+#include <string>
+#include <iostream>
+#include <sstream>
+using namespace std;
+
+class Card
+{
+public:
+   enum Suit { clubs, diamonds, hearts, spades };
+private:
+   char value;
+   Suit suit;
+   bool errorFlag;
+public:
+   Card(char value = 'A', Suit suit = spades);
+   string toString();
+
+   bool set(char value, Suit suit);
+
+   char getVal() { return value; }
+   Suit getSuit() { return suit; }
+   bool getErrorFlag() { return errorFlag; }
+
+   bool equals(Card card);
+private:
+   static bool isValid(char value, Suit suit);
+};
+
+class Hand
+{
+public:
+   static const int MAX_CARDS = 30;
+private:
+   int numCards;
+   Card myCards[MAX_CARDS];
+public:
+   Hand();
+   void resetHand();
+   bool takeCard(Card card);
+   Card playCard();
+   string toString();
+   int getNumCards() { return numCards; }
+   Card inspectCard(int k);
+};
+
+int main()
+{
+   Card card1('3', Card::diamonds), card2('T', Card::hearts),
+      card3('Q', Card::clubs);
+   Hand hand1;
+
+   for (int k = 0; k < Hand::MAX_CARDS; k++)
+   {
+      hand1.takeCard(card1);
+      hand1.takeCard(card2);
+      hand1.takeCard(card3);
+   }
+
+   cout << "Hand = ( " << hand1.toString() << " )" << endl;
+
+   hand1.inspectCard(4);
+   hand1.inspectCard(-1);
+
+   for (int k = 0; k < Hand::MAX_CARDS; k++)
+   {
+      Card currentCard = hand1.playCard();
+      cout << "Playing " << currentCard.toString();
+   }
+
+   cout << "\nAfter playing all cards\n" << "Hand = ("
+      << hand1.toString() << " )" << endl;
+}
+
+Card::Card(char value, Suit suit)
+{
+   set(value, suit);
+}
+
+string Card::toString()
+{
+   if(errorFlag)
+      return "[invalid]";
+   else
+   {
+      string retVal;
+      char strVal[2];
+
+      strVal[0] = value;
+      strVal[1] = '\0';
+
+      retVal = string(strVal);
+
+      if (suit == spades)
+         retVal += " of Spades\n";
+      else if (suit == hearts)
+         retVal += " of Hearts\n";
+      else if (suit == diamonds)
+         retVal += " of Diamonds\n";
+      else if (suit == clubs)
+         retVal += " of Clubs\n";
+
+      return retVal;
+   }
+}
+
+bool Card::set(char value, Suit suit)
+{
+   if (!isValid(value, suit))
+   {
+      errorFlag = true;
+      return false;
+   }
+
+   this->value = value;
+   this->suit = suit;
+   errorFlag = false;
+   return true;
+}
+
+bool Card::equals(Card card)
+{
+   if (this->value == value && this->suit == suit)
+      return true;
+   return false;
+}
+
+bool Card::isValid(char value, Suit suit)
+{
+   char upVal;
+
+   upVal = toupper((int)value);
+
+   if(upVal == 'A' || upVal == 'K'
+      || upVal == 'Q' || upVal == 'J'
+      || upVal == 'T' || (upVal >= '2' && upVal <= '9'))
+   {
+      value = upVal;
+      return true;
+   }
+   else
+      return false;
+}
+
+Hand::Hand()
+{
+   numCards = 0;
+}
+
+void Hand::resetHand()
+{
+   numCards = 0;
+}
+
+bool Hand::takeCard(Card card)
+{
+   if (card.getErrorFlag() == false && numCards < MAX_CARDS)
+   {
+      myCards[numCards] = card;
+      numCards += 1;
+      return true;
+   }
+
+   else if (card.getErrorFlag() == true && numCards < MAX_CARDS)
+   {
+      return true;
+   }
+
+   return false;
+}
+
+Card Hand::playCard()
+{
+   Card topCard = myCards[numCards - 1];
+   numCards -= 1;
+   return topCard;
+}
+
+string Hand::toString()
+{
+   string displayHand;
+
+   for (int k = 0; k < numCards; k++)
+   {
+      displayHand += myCards[k].toString();
+   }
+
+   return displayHand;
+}
+
+Card Hand::inspectCard(int k)
+{
+   if (k >= 0 && k < numCards)
+   {
+      cout << endl << "Testing inspectCard()" << endl;
+      Card kCard = myCards[k];
+      cout << kCard.toString() << endl;
+      return kCard;
+   }
+   else
+   {
+      cout << "** illegal **\n" << endl;
+      Card invalidCard = Card('0', Card::spades);
+      return invalidCard;
+   }
+}
+
+ /*--------------- run #2 -----------------------
+  
+  Hand = ( 3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  3 of Diamonds
+  T of Hearts
+  Q of Clubs
+  )
+
+  Testing inspectCard()
+  T of Hearts
+
+  ** illegal **
+
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  Playing Q of Clubs
+  Playing T of Hearts
+  Playing 3 of Diamonds
+  
+  After playing all cards
+  Hand = ( )
+  
+  -------------------------------------*/
+

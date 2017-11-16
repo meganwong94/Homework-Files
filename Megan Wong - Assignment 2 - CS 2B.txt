@@ -1,0 +1,1140 @@
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <stdlib.h>
+using namespace std;
+
+class Card
+{
+public:
+   enum Suit { clubs, diamonds, hearts, spades };
+private:
+   char value;
+   Suit suit;
+   bool errorFlag;
+public:
+   Card(char value = 'A', Suit suit = spades);
+   string toString();
+
+   bool set(char value, Suit suit);
+
+   char getVal() { return value; }
+   Suit getSuit() { return suit; }
+   bool getErrorFlag() { return errorFlag; }
+
+   bool equals(Card card);
+private:
+   static bool isValid(char value, Suit suit);
+};
+
+class Hand
+{
+public:
+   static const int MAX_CARDS = 30;
+private:
+   int numCards;
+   Card myCards[MAX_CARDS];
+public:
+   Hand();
+   void resetHand();
+   bool takeCard(Card card);
+   Card playCard();
+   string toString();
+   int getNumCards() { return numCards; }
+   Card inspectCard(int k);
+};
+
+class Deck
+{
+private:
+   static const int MAX_PACKS = 6;
+   static const int NUM_CARDS_PER_PACK = 52;
+   static const int MAX_CARDS_PER_DECK = MAX_PACKS*NUM_CARDS_PER_PACK;
+
+   static Card masterPack[NUM_CARDS_PER_PACK];
+
+   int topCard;
+   int numPacks;
+   Card cards[MAX_CARDS_PER_DECK];
+
+   static bool masterPackUsage;
+   static void allocateMasterPack();
+public:
+   Deck(int numPacks = 1);
+   bool init(int numPacks = 1);
+   void shuffle();
+   Card dealCard();
+   int getTopCard() { return topCard; }
+   Card inspectCard(int k);
+};
+
+bool Deck::masterPackUsage = false;
+Card Deck::masterPack[] = {0};
+
+int main()
+{
+   Deck deck1(2);
+
+   while (deck1.getTopCard() > 0)
+   {
+      Card currentCard = deck1.dealCard();
+      cout << currentCard.toString();
+   }
+   cout << endl << endl;
+
+   deck1.init(2);
+   deck1.shuffle();
+
+   while (deck1.getTopCard() > 0)
+   {
+      Card currentCard = deck1.dealCard();
+      cout << currentCard.toString();
+   }
+   cout << endl << endl;
+
+   deck1.init(1);
+
+   while (deck1.getTopCard() > 0)
+   {
+      Card currentCard = deck1.dealCard();
+      cout << currentCard.toString();
+   }
+   cout << endl << endl;
+
+   deck1.init(1);
+   deck1.shuffle();
+
+   while (deck1.getTopCard() > 0)
+   {
+      Card currentCard = deck1.dealCard();
+      cout << currentCard.toString();
+   }
+   cout << endl << endl;
+}
+
+Card::Card(char value, Suit suit)
+{
+   set(value, suit);
+}
+
+string Card::toString()
+{
+   if(errorFlag)
+      return "[invalid]";
+   else
+   {
+      string retVal;
+      char strVal[2];
+
+      strVal[0] = value;
+      strVal[1] = '\0';
+
+      retVal = string(strVal);
+
+      if (suit == spades)
+         retVal += " of Spades\n";
+      else if (suit == hearts)
+         retVal += " of Hearts\n";
+      else if (suit == diamonds)
+         retVal += " of Diamonds\n";
+      else if (suit == clubs)
+         retVal += " of Clubs\n";
+
+      return retVal;
+   }
+}
+
+bool Card::set(char value, Suit suit)
+{
+   if (!isValid(value, suit))
+   {
+      errorFlag = true;
+      return false;
+   }
+
+   this->value = value;
+   this->suit = suit;
+   errorFlag = false;
+   return true;
+}
+
+bool Card::equals(Card card)
+{
+   if (this->value == value && this->suit == suit)
+      return true;
+   return false;
+}
+
+bool Card::isValid(char value, Suit suit)
+{
+   char upVal;
+
+   upVal = toupper((int)value);
+
+   if (upVal == 'A' || upVal == 'K'
+      || upVal == 'Q' || upVal == 'J'
+      || upVal == 'T' || (upVal >= '2' && upVal <= '9'))
+   {
+      value = upVal;
+      return true;
+   }
+   else
+      return false;
+}
+
+Hand::Hand()
+{
+   numCards = 0;
+}
+
+void Hand::resetHand()
+{
+   numCards = 0;
+}
+
+bool Hand::takeCard(Card card)
+{
+   if (card.getErrorFlag() == false && numCards < MAX_CARDS)
+   {
+      myCards[numCards] = card;
+      numCards += 1;
+      return true;
+   }
+
+   else if (card.getErrorFlag() == true && numCards < MAX_CARDS)
+   {
+      return true;
+   }
+
+   return false;
+}
+
+Card Hand::playCard()
+{
+   Card topCard = myCards[numCards - 1];
+   numCards -= 1;
+   return topCard;
+}
+
+string Hand::toString()
+{
+   string displayHand;
+
+   for (int k = 0; k < numCards; k++)
+   {
+      displayHand += myCards[k].toString();
+   }
+
+   return displayHand;
+}
+
+Card Hand::inspectCard(int k)
+{
+   if (k >= 0 && k < numCards)
+   {
+      cout << endl << "Testing inspectCard()" << endl;
+      Card kCard = myCards[k];
+      cout << kCard.toString() << endl;
+      return kCard;
+   }
+   else
+   {
+      cout << "** illegal **\n" << endl;
+      Card invalidCard = Card('0', Card::spades);
+      return invalidCard;
+   }
+}
+
+Deck::Deck(int numPacks)
+{
+   allocateMasterPack();
+   init(numPacks);
+}
+
+bool Deck::init(int numPacks)
+{
+   if (numPacks < 1 || numPacks > MAX_PACKS)
+      return false;
+   else
+   {
+      for (int k = 0; k < numPacks; k++)
+      {
+         for (int i = 0; i < NUM_CARDS_PER_PACK; i++)
+         {
+            cards[topCard] = masterPack[i];
+            topCard++;
+         }
+      }
+      this->numPacks = numPacks;
+      return true;
+   }
+}
+
+void Deck::shuffle()
+{
+   int k;
+   srand(time(NULL));
+
+   for (k = 0; k < 1000; k++)
+   {
+      swap(cards[rand() % topCard], cards[topCard]);
+   }
+}
+
+Card Deck::dealCard()
+{
+   Card dealtCard = cards[topCard - 1];
+   topCard -= 1;
+   return dealtCard;
+}
+
+Card Deck::inspectCard(int k)
+{
+   if (k >= 0 && k < topCard)
+   {
+      cout << endl << "Testing inspectCard()" << endl;
+      Card kCard = cards[k];
+      cout << kCard.toString() << endl;
+      return kCard;
+   }
+   else
+   {
+      cout << "*** illegal ***" << endl;
+      Card invalidCard = Card('0', Card::spades);
+      return invalidCard;
+   }
+}
+
+void Deck::allocateMasterPack()
+{
+   if (masterPackUsage == true)
+      return;
+
+   Card::Suit st;
+   int k, j;
+   char val;
+
+   for(k = 0; k < 4; k++)
+      {
+         st = (Card::Suit)k;
+
+         masterPack[13 * k].set('A', st);
+         for(val = '2', j = 1; val <= '9'; val++, j++)
+            masterPack[13 * k + j].set(val, st);
+         masterPack[13 * k + 9].set('T', st);
+         masterPack[13 * k + 10].set('J', st);
+         masterPack[13 * k + 11].set('Q', st);
+         masterPack[13 * k + 12].set('K', st);
+      }
+   masterPackUsage = true;
+}
+
+/*------------------run #1 ---------------------
+
+ K of Spades
+ Q of Spades
+ J of Spades
+ T of Spades
+ 9 of Spades
+ 8 of Spades
+ 7 of Spades
+ 6 of Spades
+ 5 of Spades
+ 4 of Spades
+ 3 of Spades
+ 2 of Spades
+ A of Spades
+ K of Hearts
+ Q of Hearts
+ J of Hearts
+ T of Hearts
+ 9 of Hearts
+ 8 of Hearts
+ 7 of Hearts
+ 6 of Hearts
+ 5 of Hearts
+ 4 of Hearts
+ 3 of Hearts
+ 2 of Hearts
+ A of Hearts
+ K of Diamonds
+ Q of Diamonds
+ J of Diamonds
+ T of Diamonds
+ 9 of Diamonds
+ 8 of Diamonds
+ 7 of Diamonds
+ 6 of Diamonds
+ 5 of Diamonds
+ 4 of Diamonds
+ 3 of Diamonds
+ 2 of Diamonds
+ A of Diamonds
+ K of Clubs
+ Q of Clubs
+ J of Clubs
+ T of Clubs
+ 9 of Clubs
+ 8 of Clubs
+ 7 of Clubs
+ 6 of Clubs
+ 5 of Clubs
+ 4 of Clubs
+ 3 of Clubs
+ 2 of Clubs
+ A of Clubs
+ K of Spades
+ Q of Spades
+ J of Spades
+ T of Spades
+ 9 of Spades
+ 8 of Spades
+ 7 of Spades
+ 6 of Spades
+ 5 of Spades
+ 4 of Spades
+ 3 of Spades
+ 2 of Spades
+ A of Spades
+ K of Hearts
+ Q of Hearts
+ J of Hearts
+ T of Hearts
+ 9 of Hearts
+ 8 of Hearts
+ 7 of Hearts
+ 6 of Hearts
+ 5 of Hearts
+ 4 of Hearts
+ 3 of Hearts
+ 2 of Hearts
+ A of Hearts
+ K of Diamonds
+ Q of Diamonds
+ J of Diamonds
+ T of Diamonds
+ 9 of Diamonds
+ 8 of Diamonds
+ 7 of Diamonds
+ 6 of Diamonds
+ 5 of Diamonds
+ 4 of Diamonds
+ 3 of Diamonds
+ 2 of Diamonds
+ A of Diamonds
+ K of Clubs
+ Q of Clubs
+ J of Clubs
+ T of Clubs
+ 9 of Clubs
+ 8 of Clubs
+ 7 of Clubs
+ 6 of Clubs
+ 5 of Clubs
+ 4 of Clubs
+ 3 of Clubs
+ 2 of Clubs
+ A of Clubs
+
+
+ 8 of Diamonds
+ 8 of Diamonds
+ J of Spades
+ Q of Clubs
+ Q of Diamonds
+ J of Hearts
+ T of Clubs
+ 7 of Hearts
+ 9 of Spades
+ Q of Diamonds
+ 3 of Hearts
+ 6 of Spades
+ A of Diamonds
+ K of Clubs
+ 5 of Spades
+ 7 of Clubs
+ 7 of Clubs
+ 5 of Diamonds
+ 8 of Spades
+ T of Diamonds
+ 2 of Clubs
+ Q of Clubs
+ T of Clubs
+ 6 of Spades
+ 9 of Clubs
+ 2 of Clubs
+ J of Diamonds
+ T of Spades
+ 9 of Hearts
+ 6 of Diamonds
+ 8 of Hearts
+ 4 of Diamonds
+ A of Clubs
+ T of Spades
+ 9 of Spades
+ 5 of Clubs
+ K of Spades
+ 4 of Hearts
+ K of Hearts
+ 5 of Hearts
+ 2 of Diamonds
+ Q of Spades
+ 7 of Hearts
+ T of Hearts
+ 4 of Spades
+ J of Clubs
+ A of Hearts
+ 6 of Diamonds
+ 4 of Spades
+ A of Spades
+ T of Diamonds
+ 9 of Diamonds
+ Q of Spades
+ 6 of Clubs
+ 3 of Clubs
+ 5 of Spades
+ 8 of Clubs
+ 2 of Spades
+ 5 of Diamonds
+ 3 of Hearts
+ K of Diamonds
+ 8 of Spades
+ 6 of Hearts
+ 7 of Spades
+ 7 of Diamonds
+ Q of Hearts
+ 3 of Diamonds
+ 2 of Diamonds
+ 3 of Clubs
+ 3 of Diamonds
+ 7 of Spades
+ K of Spades
+ 7 of Diamonds
+ 6 of Clubs
+ 4 of Clubs
+ 4 of Diamonds
+ Q of Hearts
+ 5 of Clubs
+ K of Diamonds
+ 4 of Clubs
+ 2 of Spades
+ K of Clubs
+ 4 of Hearts
+ 5 of Hearts
+ K of Hearts
+ 9 of Diamonds
+ J of Clubs
+ 2 of Hearts
+ A of Spades
+ 8 of Clubs
+ J of Diamonds
+ J of Spades
+ A of Clubs
+ 3 of Spades
+ A of Diamonds
+ 8 of Hearts
+ 2 of Hearts
+ 9 of Clubs
+ 6 of Hearts
+ A of Hearts
+ A of Spades
+ J of Hearts
+ 9 of Hearts
+ T of Hearts
+
+
+ K of Spades
+ Q of Spades
+ J of Spades
+ T of Spades
+ 9 of Spades
+ 8 of Spades
+ 7 of Spades
+ 6 of Spades
+ 5 of Spades
+ 4 of Spades
+ 3 of Spades
+ 2 of Spades
+ A of Spades
+ K of Hearts
+ Q of Hearts
+ J of Hearts
+ T of Hearts
+ 9 of Hearts
+ 8 of Hearts
+ 7 of Hearts
+ 6 of Hearts
+ 5 of Hearts
+ 4 of Hearts
+ 3 of Hearts
+ 2 of Hearts
+ A of Hearts
+ K of Diamonds
+ Q of Diamonds
+ J of Diamonds
+ T of Diamonds
+ 9 of Diamonds
+ 8 of Diamonds
+ 7 of Diamonds
+ 6 of Diamonds
+ 5 of Diamonds
+ 4 of Diamonds
+ 3 of Diamonds
+ 2 of Diamonds
+ A of Diamonds
+ K of Clubs
+ Q of Clubs
+ J of Clubs
+ T of Clubs
+ 9 of Clubs
+ 8 of Clubs
+ 7 of Clubs
+ 6 of Clubs
+ 5 of Clubs
+ 4 of Clubs
+ 3 of Clubs
+ 2 of Clubs
+ A of Clubs
+
+
+ J of Spades
+ 5 of Diamonds
+ K of Spades
+ 2 of Hearts
+ A of Diamonds
+ T of Clubs
+ 9 of Clubs
+ Q of Diamonds
+ 4 of Hearts
+ 7 of Hearts
+ T of Hearts
+ 8 of Diamonds
+ Q of Clubs
+ 9 of Hearts
+ 4 of Clubs
+ 2 of Diamonds
+ 8 of Hearts
+ 3 of Spades
+ K of Diamonds
+ 3 of Diamonds
+ 6 of Spades
+ 7 of Clubs
+ A of Spades
+ 9 of Diamonds
+ A of Clubs
+ 8 of Clubs
+ 5 of Clubs
+ J of Hearts
+ T of Spades
+ 6 of Hearts
+ A of Hearts
+ J of Diamonds
+ 6 of Diamonds
+ Q of Hearts
+ 2 of Clubs
+ 2 of Spades
+ 5 of Spades
+ 4 of Diamonds
+ 6 of Clubs
+ K of Clubs
+ 5 of Hearts
+ 9 of Diamonds
+ J of Clubs
+ 7 of Diamonds
+ 4 of Spades
+ Q of Spades
+ 3 of Clubs
+ 9 of Spades
+ 8 of Spades
+ 7 of Spades
+ T of Diamonds
+ 3 of Hearts
+
+----------------------------------------*/
+
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <stdlib.h>
+using namespace std;
+
+class Card
+{
+public:
+   enum Suit { clubs, diamonds, hearts, spades };
+private:
+   char value;
+   Suit suit;
+   bool errorFlag;
+public:
+   Card(char value = 'A', Suit suit = spades);
+   string toString();
+
+   bool set(char value, Suit suit);
+
+   char getVal() { return value; }
+   Suit getSuit() { return suit; }
+   bool getErrorFlag() { return errorFlag; }
+
+   bool equals(Card card);
+private:
+   static bool isValid(char value, Suit suit);
+};
+
+class Hand
+{
+public:
+   static const int MAX_CARDS = 30;
+private:
+   int numCards;
+   Card myCards[MAX_CARDS];
+public:
+   Hand();
+   void resetHand();
+   bool takeCard(Card card);
+   Card playCard();
+   string toString();
+   int getNumCards() { return numCards; }
+   Card inspectCard(int k);
+};
+
+class Deck
+{
+private:
+   static const int MAX_PACKS = 6;
+   static const int NUM_CARDS_PER_PACK = 52;
+   static const int MAX_CARDS_PER_DECK = MAX_PACKS*NUM_CARDS_PER_PACK;
+
+   static Card masterPack[NUM_CARDS_PER_PACK];
+
+   int topCard;
+   int numPacks;
+   Card cards[MAX_CARDS_PER_DECK];
+
+   static bool masterPackUsage;
+   static void allocateMasterPack();
+public:
+   Deck(int numPacks = 1);
+   bool init(int numPacks = 1);
+   void shuffle();
+   Card dealCard();
+   int getTopCard() { return topCard; }
+   Card inspectCard(int k);
+};
+
+bool Deck::masterPackUsage = false;
+Card Deck::masterPack[] = {0};
+
+int main()
+{
+   string userInput;
+   int userInputInt;
+
+   do
+   {
+      cout << "How many hands? (1 - 10, please) : ";
+      getline(cin, userInput);
+      istringstream(userInput) >> userInputInt;
+   }
+   while (userInputInt < 1 || userInputInt > 10);
+
+   cout << "Here are our hands, from unshuffled deck: " << endl;
+
+   Deck deck1(1);
+   Hand *hands;
+   hands = new Hand[userInputInt];
+
+   do
+   {
+      for (int k = 0; k < userInputInt; k++)
+      {
+         Card dealtCard = deck1.dealCard();
+         hands[k].takeCard(dealtCard);
+      }
+   }
+   while (deck1.getTopCard() > 0);
+
+   for (int k = 0; k < userInputInt; k++)
+   {
+      cout << "Hand = " << endl << hands[k].toString() << endl;
+   }
+
+   deck1.init(1);
+
+   for(int k = 0; k < userInputInt; k++)
+   {
+      hands[k].resetHand();
+   }
+
+   deck1.shuffle();
+
+   cout << endl << "Here are our hands, from SHUFFLED deck: " << endl;
+
+   do
+   {
+      for (int k = 0; k < userInputInt; k++)
+      {
+         Card dealtCard = deck1.dealCard();
+         hands[k].takeCard(dealtCard);
+      }
+   }
+   while (deck1.getTopCard() > 0);
+
+   for (int k = 0; k < userInputInt; k++)
+   {
+      cout << "Hand = " << endl << hands[k].toString() << endl;
+   }
+}
+
+Card::Card(char value, Suit suit)
+{
+   set(value, suit);
+}
+
+string Card::toString()
+{
+   if(errorFlag)
+      return "[invalid]";
+   else
+   {
+      string retVal;
+      char strVal[2];
+
+      strVal[0] = value;
+      strVal[1] = '\0';
+
+      retVal = string(strVal);
+
+      if (suit == spades)
+         retVal += " of Spades\n";
+      else if (suit == hearts)
+         retVal += " of Hearts\n";
+      else if (suit == diamonds)
+         retVal += " of Diamonds\n";
+      else if (suit == clubs)
+         retVal += " of Clubs\n";
+
+      return retVal;
+   }
+}
+
+bool Card::set(char value, Suit suit)
+{
+   if (!isValid(value, suit))
+   {
+      errorFlag = true;
+      return false;
+   }
+
+   this->value = value;
+   this->suit = suit;
+   errorFlag = false;
+   return true;
+}
+
+bool Card::equals(Card card)
+{
+   if (this->value == value && this->suit == suit)
+      return true;
+   return false;
+}
+
+bool Card::isValid(char value, Suit suit)
+{
+   char upVal;
+
+   upVal = toupper((int)value);
+
+   if (upVal == 'A' || upVal == 'K'
+       || upVal == 'Q' || upVal == 'J'
+       || upVal == 'T' || (upVal >= '2' && upVal <= '9'))
+   {
+      value = upVal;
+      return true;
+   }
+   else
+      return false;
+}
+
+Hand::Hand()
+{
+   numCards = 0;
+}
+
+void Hand::resetHand()
+{
+   numCards = 0;
+}
+
+bool Hand::takeCard(Card card)
+{
+   if (card.getErrorFlag() == false && numCards < MAX_CARDS)
+   {
+      myCards[numCards] = card;
+      numCards += 1;
+      return true;
+   }
+
+   else if (card.getErrorFlag() == true && numCards < MAX_CARDS)
+   {
+      return true;
+   }
+
+   return false;
+}
+
+Card Hand::playCard()
+{
+   Card topCard = myCards[numCards - 1];
+   numCards -= 1;
+   return topCard;
+}
+
+string Hand::toString()
+{
+   string displayHand;
+
+   for (int k = 0; k < numCards; k++)
+   {
+      displayHand += myCards[k].toString();
+   }
+
+   return displayHand;
+}
+
+Card Hand::inspectCard(int k)
+{
+   if (k >= 0 && k < numCards)
+   {
+      cout << endl << "Testing inspectCard()" << endl;
+      Card kCard = myCards[k];
+      cout << kCard.toString() << endl;
+      return kCard;
+   }
+   else
+   {
+      cout << "** illegal **\n" << endl;
+      Card invalidCard = Card('0', Card::spades);
+      return invalidCard;
+   }
+}
+
+Deck::Deck(int numPacks)
+{
+   allocateMasterPack();
+   init(numPacks);
+}
+
+bool Deck::init(int numPacks)
+{
+   if (numPacks < 1 || numPacks > MAX_PACKS)
+      return false;
+   else
+   {
+      topCard = 0;
+      for (int k = 0; k < numPacks; k++)
+      {
+         for (int i = 0; i < NUM_CARDS_PER_PACK; i++)
+         {
+            cards[topCard] = masterPack[i];
+            topCard++;
+         }
+      }
+      this->numPacks = numPacks;
+      return true;
+   }
+}
+
+void Deck::shuffle()
+{
+   int k;
+   srand(time(NULL));
+
+   for (k = 0; k < 1000; k++)
+   {
+      swap(cards[rand() % topCard], cards[topCard]);
+   }
+}
+
+Card Deck::dealCard()
+{
+   Card dealtCard = cards[topCard - 1];
+   topCard -= 1;
+   return dealtCard;
+}
+
+Card Deck::inspectCard(int k)
+{
+   if (k >= 0 && k < topCard)
+   {
+      cout << endl << "Testing inspectCard()" << endl;
+      Card kCard = cards[k];
+      cout << kCard.toString() << endl;
+      return kCard;
+   }
+   else
+   {
+      cout << "*** illegal ***" << endl;
+      Card invalidCard = Card('0', Card::spades);
+      return invalidCard;
+   }
+}
+
+void Deck::allocateMasterPack()
+{
+   if (masterPackUsage == true)
+      return;
+
+   Card::Suit st;
+   int k, j;
+   char val;
+
+   for(k = 0; k < 4; k++)
+   {
+      st = (Card::Suit)k;
+
+      masterPack[13 * k].set('A', st);
+      for(val = '2', j = 1; val <= '9'; val++, j++)
+         masterPack[13 * k + j].set(val, st);
+      masterPack[13 * k + 9].set('T', st);
+      masterPack[13 * k + 10].set('J', st);
+      masterPack[13 * k + 11].set('Q', st);
+      masterPack[13 * k + 12].set('K', st);
+   }
+   masterPackUsage = true;
+}
+
+/*------------------run #2 ---------------------
+
+ How many hands? (1 - 10, please) : 5
+ Here are our hands, from unshuffled deck:
+ Hand =
+ K of Spades
+ 8 of Spades
+ 3 of Spades
+ J of Hearts
+ 6 of Hearts
+ A of Hearts
+ 9 of Diamonds
+ 4 of Diamonds
+ Q of Clubs
+ 7 of Clubs
+ 2 of Clubs
+
+ Hand =
+ Q of Spades
+ 7 of Spades
+ 2 of Spades
+ T of Hearts
+ 5 of Hearts
+ K of Diamonds
+ 8 of Diamonds
+ 3 of Diamonds
+ J of Clubs
+ 6 of Clubs
+ A of Clubs
+
+ Hand =
+ J of Spades
+ 6 of Spades
+ A of Spades
+ 9 of Hearts
+ 4 of Hearts
+ Q of Diamonds
+ 7 of Diamonds
+ 2 of Diamonds
+ T of Clubs
+ 5 of Clubs
+
+ Hand =
+ T of Spades
+ 5 of Spades
+ K of Hearts
+ 8 of Hearts
+ 3 of Hearts
+ J of Diamonds
+ 6 of Diamonds
+ A of Diamonds
+ 9 of Clubs
+ 4 of Clubs
+  of Spades
+
+ Hand =
+ 9 of Spades
+ 4 of Spades
+ Q of Hearts
+ 7 of Hearts
+ 2 of Hearts
+ T of Diamonds
+ 5 of Diamonds
+ K of Clubs
+ 8 of Clubs
+ 3 of Clubs
+
+
+ Here are our hands, from SHUFFLED deck:
+ Hand =
+ K of Diamonds
+ 4 of Diamonds
+ 8 of Diamonds
+ A of Spades
+ 3 of Clubs
+ 2 of Clubs
+ 6 of Diamonds
+ 2 of Spades
+ A of Clubs
+ K of Spades
+ Q of Hearts
+
+ Hand =
+ K of Hearts
+ 4 of Hearts
+ 8 of Hearts
+ T of Hearts
+ 3 of Diamonds
+ A of Hearts
+ 6 of Spades
+ 3 of Hearts
+ 4 of Spades
+ J of Diamonds
+ 2 of Diamonds
+
+ Hand =
+ 9 of Diamonds
+ Q of Clubs
+ 8 of Clubs
+ Q of Spades
+ A of Spades
+ 7 of Diamonds
+ 7 of Spades
+ 6 of Hearts
+ 3 of Spades
+ 9 of Hearts
+
+ Hand =
+ 9 of Spades
+ T of Spades
+ 5 of Diamonds
+ A of Diamonds
+ 2 of Hearts
+ Q of Diamonds
+ J of Spades
+ 4 of Clubs
+ 5 of Spades
+ T of Diamonds
+ 
+ Hand =
+ 5 of Clubs
+ J of Clubs
+ 8 of Spades
+ 6 of Clubs
+ 9 of Clubs
+ 7 of Clubs
+ T of Clubs
+ 5 of Hearts
+ J of Hearts
+ K of Clubs
+
+ ----------------------------------------*/
+
+

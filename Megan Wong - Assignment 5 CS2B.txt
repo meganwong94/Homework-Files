@@ -1,0 +1,258 @@
+#include <iostream>
+#include <cmath>
+#include <sstream>
+using namespace std;
+
+class Complex
+{
+private:
+   double real, imag;
+
+public:
+   Complex(double real = DEFAULT_COMPLEX_NUM, double imag = DEFAULT_COMPLEX_NUM);
+   bool setReal(double real);
+   bool setImag(double imag);
+   double getReal() { return real; }
+   double getImag() { return imag; }
+   double modulus() const;
+   Complex reciprocal() const;
+   string toString();
+   class DivByZeroException { };
+
+   friend Complex operator+(const Complex & num1, const Complex & num2);
+   friend Complex operator-(const Complex & num1, const Complex & num2);
+   friend Complex operator*(const Complex & num1, const Complex & num2);
+   friend Complex operator/(const Complex & num1, const Complex & num2);
+   friend ostream & operator<<(ostream & ostrm, const Complex & cmplx);
+   Complex & operator=(const Complex & cmplx);
+   bool operator<(const Complex & num2);
+   bool operator==(const Complex & num2);
+
+   const static int DEFAULT_COMPLEX_NUM = 0;
+   const static double DBL_MAX;
+};
+
+const double Complex::DBL_MAX = 1.7976931348623158e+308;
+
+int main()
+{
+   try
+   {
+      Complex a(3, -4), b(1.1, 2.1), c;
+      double x = 2, y = -1.7;
+
+      c = a + b;
+      cout << c;
+
+      c = x - a;
+      cout << c;
+
+      c = b * y;
+      cout << c;
+
+      c = 8 + a;
+      cout << c;
+
+      c = b / 3.2;
+      cout << c;
+
+      Complex d(1, 2), e(3, 4), f;
+
+      if (d < e)
+         cout << endl << "d is less than e" << endl << endl;
+      else
+         cout << endl << "d is not less than e" << endl << endl;
+
+      if (d == e)
+         cout << "d equals e" << endl << endl;
+      else
+         cout << "d does not equal e" << endl << endl;
+
+      f = d + e;
+      cout << f;
+
+      f = d - e;
+      cout << f;
+
+      f = d * e;
+      cout << f;
+
+      f = d / e;
+      cout << f;
+
+      f = d + 10;
+      cout << f;
+
+      f = 10 / e;
+      cout << f;
+
+      f = e / 0;
+   }
+   catch (Complex::DivByZeroException)
+   {
+      cout << endl << "*** dividing by zero ***" << endl;
+   }
+}
+
+Complex::Complex(double real, double imag)
+{
+   if (!setReal(real))
+      this->real = DEFAULT_COMPLEX_NUM;
+   if (!setImag(imag))
+      this->imag = DEFAULT_COMPLEX_NUM;
+}
+
+bool Complex::setReal(double real)
+{
+   if (real > DBL_MAX)
+      return false;
+   else
+   {
+      this->real = real;
+      return true;
+   }
+}
+
+bool Complex::setImag(double imag)
+{
+   if (imag > DBL_MAX)
+      return false;
+   else
+   {
+      this->imag = imag;
+      return true;
+   }
+}
+
+double Complex::modulus() const
+{
+   double returnDouble;
+
+   returnDouble = sqrt((real)*(real) + (imag)*(imag));
+
+   return returnDouble;
+}
+
+Complex Complex::reciprocal() const
+{
+   double r, i;
+
+   if ((real*real + imag*imag) == 0)
+      throw DivByZeroException();
+   else
+   {
+      r = real/(real*real + imag*imag);
+      i = (-imag)/(real*real + imag*imag);
+   }
+   Complex returnComplex(r, i);
+   return returnComplex;
+}
+
+string Complex::toString()
+{
+   ostringstream cnvrt1, cnvrt2;
+   string retString;
+
+   cnvrt1 << real;
+   cnvrt2 << imag;
+
+   retString = "(" + cnvrt1.str() + ", " + cnvrt2.str() + ")";
+
+   return retString;
+}
+
+Complex operator+(const Complex & num1, const Complex & num2)
+{
+   double r, i;
+
+   r = num1.real + num2.real;
+   i = num1.imag + num2.imag;
+
+   Complex returnComplex(r, i);
+
+   return returnComplex;
+}
+
+Complex operator-(const Complex & num1, const Complex & num2)
+{
+   double r, i;
+
+   r = num1.real - num2.real;
+   i = num1.imag - num2.imag;
+
+   Complex returnComplex(r, i);
+
+   return returnComplex;
+}
+
+Complex operator*(const Complex & num1, const Complex & num2)
+{
+   double r, i;
+
+   r = (num1.real*num2.real) - (num1.imag*num2.imag);
+   i = (num1.real*num2.imag) + (num2.real*num1.imag);
+
+   Complex returnComplex(r, i);
+   return returnComplex;
+}
+
+Complex operator/(const Complex & num1, const Complex & num2)
+{
+   return num1 * num2.reciprocal();
+}
+
+ostream & operator<<(ostream & ostrm, const Complex & cmplx)
+{
+   ostrm << "(" << cmplx.real << ", " << cmplx.imag << ")" << endl;
+   return ostrm;
+}
+
+Complex & Complex::operator=(const Complex & cmplx)
+{
+   if(this != &cmplx)
+   {
+      this->real = cmplx.real;
+      this->imag = cmplx.imag;
+   }
+   return *this;
+}
+
+bool Complex::operator<(const Complex & num2)
+{
+   if (this->modulus() < num2.modulus())
+      return true;
+   else
+      return false;
+}
+
+bool Complex::operator==(const Complex & num2)
+{
+   if ((this->real == num2.real) && (this->imag == num2.imag))
+      return true;
+   else
+      return false;
+}
+
+/* ----------------------- run --------------------------
+ 
+ (4.1, -1.9)
+ (-1, 4)
+ (-1.87, -3.57)
+ (11, -4)
+ (0.34375, 0.65625)
+
+ d is less than e
+
+ d does not equal e
+
+ (4, 6)
+ (-2, -2)
+ (-5, 10)
+ (0.44, 0.08)
+ (11, 2)
+ (1.2, -1.6)
+
+ *** dividing by zero ***
+ 
+ ----------------------------------------------------------*/
+
