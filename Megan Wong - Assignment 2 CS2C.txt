@@ -1,0 +1,320 @@
+// FHsparseMatrix.h
+
+#include <iostream>
+#include "FHvector.h"
+#include "FHlist.h"
+using namespace std;
+
+template <class Object>
+class MatNode
+{
+protected:
+   int col;
+public:
+   Object data;
+
+   MatNode(int cl = 0, Object dt = Object()) : col(cl), data(dt) {}
+   int getCol() const { return col; }
+
+   const Object & operator=(const Object &x) { return (data = x);} \
+};
+
+template <class Object>
+class SparseMat
+{
+protected:
+   typedef FHlist< MatNode<Object> > MatRow;
+   typedef FHvector<MatRow> MasterCol;
+
+   MasterCol rows;
+   Object defaultVal;
+   int rowSize, colSize;
+public:
+   SparseMat(int r, int c, const Object & defaultVal);
+   const Object & get(int r, int c) const;
+   bool set(int r, int c, const Object &x);
+   void clear();
+   void showSubSquare(int start, int size);
+   class MatrixBoundsViolation { };
+};
+
+template <class Object>
+SparseMat<Object>::SparseMat(int r, int c, const Object & defaultVal)
+{
+   if (r >= 1)
+   {
+      rowSize = r;
+      rows.resize(r);
+   }
+   if (c >= 1)
+   {
+      colSize = c;
+   }
+
+   this->defaultVal = defaultVal;
+}
+
+template <class Object>
+const Object &SparseMat<Object>::get(int r, int c) const
+{
+   typename MatRow::const_iterator iter;
+
+   if (r > rowSize || c > colSize)
+      throw MatrixBoundsViolation();
+
+   for (iter = rows[r].begin(); iter != rows[r].end(); iter++)
+   {
+      if (c == (*iter).getCol())
+      {
+         return (*iter).data;
+      }
+   }
+   return defaultVal;
+}
+
+template <class Object>
+bool SparseMat<Object>::set(int r, int c, const Object &x)
+{
+   typename MatRow::iterator iter;
+   MatNode<Object> newNode(c, x);
+
+   if (r >= rowSize || c >= colSize)
+      return false;
+
+   if (x == defaultVal)
+   {
+      for (iter = rows[r].begin(); iter != rows[r].end(); iter++)
+      {
+         if (c == (*iter).getCol())
+         {
+            rows[r].erase(iter);
+            return true;
+         }
+      }
+   }
+
+   else
+   {
+      for (iter = rows[r].begin(); iter != rows[r].end(); iter++)
+      {
+         if (c == (*iter).getCol())
+         {
+            (*iter).data = x;
+            return true;
+         }
+      }
+      rows[r].push_back(newNode);
+      return true;
+   }
+   return false;
+}
+
+template <class Object>
+void SparseMat<Object>::clear()
+{
+   typename MatRow::iterator iter;
+
+   for (int i = 0; i < rows.size(); i++)
+   {
+      for (iter = rows[i].begin(); iter != rows[i].end(); iter++)
+      {
+         (*iter).data = defaultVal;
+      }
+   }
+}
+
+template <class Object>
+void SparseMat<Object>::showSubSquare(int start, int size)
+{
+   for (int i = start; i <= (start + size - 1); i++)
+   {
+      for (int j = start; j <= (start + size - 1); j++)
+      {
+         cout << this->get(i, j) << " ";
+      }
+      cout << endl;
+   }
+   cout << endl << endl;
+}
+
+// main.cpp
+
+#include <iostream>
+#include "FHvector.h"
+#include "FHlist.h"
+using namespace std;
+
+template <class Object>
+class MatNode
+{
+protected:
+   int col;
+public:
+   Object data;
+
+   MatNode(int cl = 0, Object dt = Object()) : col(cl), data(dt) {}
+   int getCol() const { return col; }
+
+   const Object & operator=(const Object &x) { return (data = x);} \
+};
+
+template <class Object>
+class SparseMat
+{
+protected:
+   typedef FHlist< MatNode<Object> > MatRow;
+   typedef FHvector<MatRow> MasterCol;
+
+   MasterCol rows;
+   Object defaultVal;
+   int rowSize, colSize;
+public:
+   SparseMat(int r, int c, const Object & defaultVal);
+   const Object & get(int r, int c) const;
+   bool set(int r, int c, const Object &x);
+   void clear();
+   void showSubSquare(int start, int size);
+   class MatrixBoundsViolation { };
+};
+
+template <class Object>
+SparseMat<Object>::SparseMat(int r, int c, const Object & defaultVal)
+{
+   if (r >= 1)
+   {
+      rowSize = r;
+      rows.resize(r);
+   }
+   if (c >= 1)
+   {
+      colSize = c;
+   }
+
+   this->defaultVal = defaultVal;
+}
+
+template <class Object>
+const Object &SparseMat<Object>::get(int r, int c) const
+{
+   typename MatRow::const_iterator iter;
+
+   if (r > rowSize || c > colSize)
+      throw MatrixBoundsViolation();
+
+   for (iter = rows[r].begin(); iter != rows[r].end(); iter++)
+   {
+      if (c == (*iter).getCol())
+      {
+         return (*iter).data;
+      }
+   }
+   return defaultVal;
+}
+
+template <class Object>
+bool SparseMat<Object>::set(int r, int c, const Object &x)
+{
+   typename MatRow::iterator iter;
+   MatNode<Object> newNode(c, x);
+
+   if (r >= rowSize || c >= colSize)
+      return false;
+
+   if (x == defaultVal)
+   {
+      for (iter = rows[r].begin(); iter != rows[r].end(); iter++)
+      {
+         if (c == (*iter).getCol())
+         {
+            rows[r].erase(iter);
+            return true;
+         }
+      }
+   }
+
+   else
+   {
+      for (iter = rows[r].begin(); iter != rows[r].end(); iter++)
+      {
+         if (c == (*iter).getCol())
+         {
+            (*iter).data = x;
+            return true;
+         }
+      }
+      rows[r].push_back(newNode);
+      return true;
+   }
+   return false;
+}
+
+template <class Object>
+void SparseMat<Object>::clear()
+{
+   typename MatRow::iterator iter;
+
+   for (int i = 0; i < rows.size(); i++)
+   {
+      for (iter = rows[i].begin(); iter != rows[i].end(); iter++)
+      {
+         (*iter).data = defaultVal;
+      }
+   }
+}
+
+template <class Object>
+void SparseMat<Object>::showSubSquare(int start, int size)
+{
+   for (int i = start; i <= (start + size - 1); i++)
+   {
+      for (int j = start; j <= (start + size - 1); j++)
+      {
+         cout << this->get(i, j) << " ";
+      }
+      cout << endl;
+   }
+   cout << endl << endl;
+}
+
+/* ------------------- run ------------------------
+ 
+0
+35
+21
+oops
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 35 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 21 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 21 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+
+
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 99 
+
+------------------------------------ */
+
+

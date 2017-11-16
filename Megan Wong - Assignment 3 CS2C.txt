@@ -1,0 +1,129 @@
+I believe that multiplying two matrices together will give us a O(N^3) upper bound because three loops will be used, with the theta estimate being N^3 as well since there are no additional commands being given, without counting allocating the array for the return matrix.
+
+1. 110 is the smallest M that gave me 0.01 seconds.
+2. M = 100; 0.00 seconds
+   M = 200; 0.03 seconds
+   M = 300; 0.11 seconds
+   M = 400; 0.40 seconds
+3. At M = 1,000,000, the program refused to run.
+
+#include <iostream>
+#include <stdlib.h>
+#include <time.h>
+#include <iomanip>
+using namespace std;
+
+const int MAT_SIZE = 300;
+typedef float* DynMat[MAT_SIZE];
+
+void matMultDyn(const DynMat& matA, const DynMat& matB, DynMat& matC, int size)
+{
+   for (int i = 0; i < size; i++)
+   {
+      matC[i] = new float[size];
+      for (int j = 0; j < size; j++)
+      {
+         matC[i][j] = 0;
+      }
+   }
+
+   for (int i = 0; i < size; i++)
+   {
+      for (int j = 0; j < size; j++)
+      {
+         for (int k = 0; k < size; k++)
+         {
+            matC[i][j] += matA[i][k] * matB[k][j];
+         }
+      }
+   }
+}
+
+void matShowDyn(const DynMat& matA, int start, int size)
+{
+   for (int i = start; i <= (start + size - 1); i++)
+   {
+      for (int j = start; j <= (start + size - 1); j++)
+      {
+         cout << setprecision(2) << fixed << matA[i][j] << " ";
+      }
+      cout << endl;
+   }
+   cout << endl << endl;
+}
+
+int main()
+{
+   clock_t startTime, stopTime;
+   int randRow, randCol, smallPercent;
+
+   DynMat matDyn, matDynAns;
+
+   for (int r = 0; r < MAT_SIZE; r++)
+   {
+      matDyn[r] = new float[MAT_SIZE];
+      for (int c = 0; c < MAT_SIZE; c++)
+      {
+         matDyn[r][c] = 0;
+      }
+   }
+
+   smallPercent = MAT_SIZE/20. * MAT_SIZE;
+   for (int r = 0; r < smallPercent; r++)
+   {
+      randRow = rand() % MAT_SIZE;
+      randCol = rand() % MAT_SIZE;
+
+      matDyn[randRow][randCol] = static_cast <float> (rand())
+      / static_cast <float> (RAND_MAX);
+   }
+
+   matShowDyn(matDyn, MAT_SIZE - 10, 10);
+
+   startTime = clock();
+   matMultDyn(matDyn, matDyn, matDynAns, MAT_SIZE);
+   stopTime = clock();
+
+   matShowDyn(matDynAns, MAT_SIZE - 10, 10);
+
+   cout << "\nSize = " << MAT_SIZE << " Dyn Array Mult Elapsed Time: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   for (int r = 0; r < MAT_SIZE; r++)
+   {
+      delete[] matDynAns[r];
+   }
+}
+
+/* ----------------------- run ---------------------------
+ 
+ 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+ 0.00 0.00 0.00 0.00 0.27 0.00 0.00 0.34 0.00 0.00
+ 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.01 0.00
+ 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+ 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+ 0.00 0.00 0.00 0.00 0.39 0.00 0.52 0.00 0.00 0.00
+ 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+ 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+ 0.00 0.00 0.00 0.00 0.00 0.27 0.00 0.00 0.57 0.00
+ 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+
+
+ 0.53 0.17 0.00 0.11 0.15 0.13 0.55 0.00 0.00 0.14
+ 0.39 0.93 0.00 0.69 0.00 0.00 0.23 0.00 0.00 0.00
+ 0.12 0.00 0.00 0.00 0.00 0.56 0.02 0.25 0.16 0.00
+ 0.42 0.05 0.00 0.00 0.00 0.00 0.28 0.00 0.00 0.00
+ 0.00 0.59 0.00 0.07 0.00 0.39 0.91 0.00 0.00 0.86
+ 0.00 0.00 0.00 0.00 0.00 0.00 0.57 0.00 0.00 0.00
+ 0.62 0.16 0.22 0.00 0.00 1.03 0.00 0.29 0.00 1.12
+ 0.00 0.00 0.00 0.34 0.17 0.25 0.09 0.00 0.69 0.00
+ 0.80 0.00 0.00 0.00 0.11 0.16 0.19 0.00 0.33 0.09
+ 0.07 0.15 0.00 0.17 0.12 0.00 0.31 0.00 0.06 0.09
+
+
+
+ Size = 300 Dyn Array Mult Elapsed Time: 0.12 seconds.
+ 
+-------------------------------------------------------- */
+

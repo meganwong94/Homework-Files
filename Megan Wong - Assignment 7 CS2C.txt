@@ -1,0 +1,417 @@
+#include <iostream>
+#include "FHvector.h"
+#include <time.h>
+#include <math.h>
+
+using namespace std;
+
+template <typename Comparable>
+void shellSort1(FHvector<Comparable> & a)
+{
+   int k, pos, arraySize, gap;
+   Comparable tmp;
+
+   arraySize = a.size();
+   for (gap = arraySize/2;  gap > 0;  gap /= 2)
+      for(pos = gap ; pos < arraySize; pos++ )
+      {
+         tmp = a[pos];
+         for(k = pos; k >= gap && tmp < a[k - gap]; k -= gap )
+            a[k] = a[k - gap];
+         a[k] = tmp;
+      }
+}
+
+template <typename Comparable>
+void shellSortX(FHvector<Comparable> & a, int array[], int paramArraySize)
+{
+   int k, pos, arraySize, gap;
+   Comparable tmp;
+
+   arraySize = a.size();
+   for (gap = array[paramArraySize - 1]; gap == array[0];
+        gap = array[paramArraySize --])
+   {
+      for (pos = gap; pos < arraySize; pos++)
+      {
+         tmp = a[pos];
+         for (k = pos; k >= gap && tmp < a[k - gap]; k -= gap)
+            a[k] = a[k - gap];
+         a[k] = tmp;
+      }
+   }
+}
+
+#define ARRAY_SIZE 10000
+#define ARRAY_SIZE2 50000
+#define ARRAY_SIZE3 100000
+#define ARRAY_SIZE4 150000
+#define ARRAY_SIZE5 150500
+#define ARRAY_SIZE6 200000
+
+
+int main()
+{
+
+   FHvector<int> fhVectorOfInts1;
+   FHvector<int> fhVectorOfInts2;
+   FHvector<int> fhVectorOfInts3;
+   FHvector<int> fhVectorOfInts4;
+   FHvector<int> fhVectorOfInts5;
+   FHvector<int> fhVectorOfInts6;
+   int arrayOfInts[ARRAY_SIZE];
+   int arrayOfInts2[ARRAY_SIZE2];
+   int arrayOfInts3[ARRAY_SIZE3];
+   int arrayOfInts4[ARRAY_SIZE4];
+   int arrayOfInts5[ARRAY_SIZE5];
+   int arrayOfInts6[ARRAY_SIZE6];
+
+   for (int k = 0; k < ARRAY_SIZE; k++)
+   {
+      arrayOfInts[k] = rand() % ARRAY_SIZE;
+      fhVectorOfInts1.push_back(arrayOfInts[k]);
+   }
+   for (int k = 0; k < ARRAY_SIZE2; k++)
+   {
+      arrayOfInts2[k] = rand() % ARRAY_SIZE2;
+      fhVectorOfInts2.push_back(arrayOfInts2[k]);
+   }
+   for (int k = 0; k < ARRAY_SIZE3; k++)
+   {
+      arrayOfInts3[k] = rand() % ARRAY_SIZE3;
+      fhVectorOfInts3.push_back(arrayOfInts3[k]);
+   }
+   for (int k = 0; k < ARRAY_SIZE4; k++)
+   {
+      arrayOfInts4[k] = rand() % ARRAY_SIZE4;
+      fhVectorOfInts4.push_back(arrayOfInts4[k]);
+   }
+   for (int k = 0; k < ARRAY_SIZE5; k++)
+   {
+      arrayOfInts5[k] = rand() % ARRAY_SIZE5;
+      fhVectorOfInts5.push_back(arrayOfInts5[k]);
+   }
+   for (int k = 0; k < ARRAY_SIZE6; k++)
+   {
+      arrayOfInts6[k] = rand() % ARRAY_SIZE6;
+      fhVectorOfInts6.push_back(arrayOfInts6[k]);
+   }
+
+   int gapArray[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096,
+      8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576 };
+   int gapArraySize = sizeof(gapArray)/sizeof(gapArray[0]);
+
+   int sedgewickArray[30];
+   int sedgewickArraySize = sizeof(sedgewickArray)/sizeof(sedgewickArray[0]);
+
+   for (int i = 0; i < sedgewickArraySize; i++)
+   {
+      sedgewickArray[i] = (pow(3, i) - 1)/2;
+   }
+
+   int foundArray[] = { 1, 4, 10, 23, 57, 132, 301, 701 };
+   int foundArraySize = sizeof(foundArray)/sizeof(foundArray[0]);
+
+   clock_t startTime, stopTime;
+
+   startTime = clock();  // ------------------ start
+
+   shellSort1(fhVectorOfInts1);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSort1 Elapsed Time using fhVectorOfInts1: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts1, gapArray, gapArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX gapArray Elapsed Time using fhVectorOfInts1: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts1, sedgewickArray, sedgewickArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX sedgewickArray Elapsed Time using fhVectorOfInts1: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts1, foundArray, foundArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX foundArray Elapsed Time using fhVectorOfInts1: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSort1(fhVectorOfInts2);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSort1 Elapsed Time using fhVectorOfInts2: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts2, gapArray, gapArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX gapArray Elapsed Time using fhVectorOfInts2: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts2, sedgewickArray, sedgewickArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX sedgewickArray Elapsed Time using fhVectorOfInts2: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts2, foundArray, foundArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX foundArray Elapsed Time using fhVectorOfInts2: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSort1(fhVectorOfInts3);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSort1 Elapsed Time using fhVectorOfInts3: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts3, gapArray, gapArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX gapArray Elapsed Time using fhVectorOfInts3: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts3, sedgewickArray, sedgewickArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX sedgewickArray Elapsed Time using fhVectorOfInts3: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts3, foundArray, foundArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX foundArray Elapsed Time using fhVectorOfInts3: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSort1(fhVectorOfInts4);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSort1 Elapsed Time using fhVectorOfInts4: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts4, gapArray, gapArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX gapArray Elapsed Time using fhVectorOfInts4: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts4, sedgewickArray, sedgewickArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX sedgewickArray Elapsed Time using fhVectorOfInts4: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts4, foundArray, foundArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX foundArray Elapsed Time using fhVectorOfInts4: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSort1(fhVectorOfInts5);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSort1 Elapsed Time using fhVectorOfInts5: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts5, gapArray, gapArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX gapArray Elapsed Time using fhVectorOfInts5: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts5, sedgewickArray, sedgewickArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX sedgewickArray Elapsed Time using fhVectorOfInts5: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts5, foundArray, foundArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX foundArray Elapsed Time using fhVectorOfInts5: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSort1(fhVectorOfInts6);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSort1 Elapsed Time using fhVectorOfInts6: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts6, gapArray, gapArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX gapArray Elapsed Time using fhVectorOfInts6: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts6, sedgewickArray, sedgewickArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX sedgewickArray Elapsed Time using fhVectorOfInts6: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+   startTime = clock();  // ------------------ start
+
+   shellSortX(fhVectorOfInts6, foundArray, foundArraySize);
+
+   stopTime = clock();  // ---------------------- stop
+   cout << "\nshellSortX foundArray Elapsed Time using fhVectorOfInts6: "
+   << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+   << " seconds." << endl << endl;
+
+}
+
+/* ---------------------------- run --------------------------------
+ 
+ shellSort1 Elapsed Time using fhVectorOfInts1: 0.004531 seconds.
+
+
+ shellSortX gapArray Elapsed Time using fhVectorOfInts1: 2e-06 seconds.
+
+
+ shellSortX sedgewickArray Elapsed Time using fhVectorOfInts1: 0 seconds.
+
+
+ shellSortX foundArray Elapsed Time using fhVectorOfInts1: 1e-06 seconds.
+
+
+ shellSort1 Elapsed Time using fhVectorOfInts2: 0.031711 seconds.
+
+
+ shellSortX gapArray Elapsed Time using fhVectorOfInts2: 1e-06 seconds.
+
+
+ shellSortX sedgewickArray Elapsed Time using fhVectorOfInts2: 0 seconds.
+
+
+ shellSortX foundArray Elapsed Time using fhVectorOfInts2: 0 seconds.
+
+
+ shellSort1 Elapsed Time using fhVectorOfInts3: 0.075801 seconds.
+
+
+ shellSortX gapArray Elapsed Time using fhVectorOfInts3: 1e-06 seconds.
+
+
+ shellSortX sedgewickArray Elapsed Time using fhVectorOfInts3: 1e-06 seconds.
+
+
+ shellSortX foundArray Elapsed Time using fhVectorOfInts3: 0 seconds.
+
+
+ shellSort1 Elapsed Time using fhVectorOfInts4: 0.110278 seconds.
+
+
+ shellSortX gapArray Elapsed Time using fhVectorOfInts4: 1e-06 seconds.
+
+
+ shellSortX sedgewickArray Elapsed Time using fhVectorOfInts4: 1e-06 seconds.
+
+
+ shellSortX foundArray Elapsed Time using fhVectorOfInts4: 0 seconds.
+
+
+ shellSort1 Elapsed Time using fhVectorOfInts5: 0.120228 seconds.
+
+
+ shellSortX gapArray Elapsed Time using fhVectorOfInts5: 2e-06 seconds.
+
+
+ shellSortX sedgewickArray Elapsed Time using fhVectorOfInts5: 0 seconds.
+
+
+ shellSortX foundArray Elapsed Time using fhVectorOfInts5: 0 seconds.
+
+
+ shellSort1 Elapsed Time using fhVectorOfInts6: 0.172474 seconds.
+
+
+ shellSortX gapArray Elapsed Time using fhVectorOfInts6: 1e-06 seconds.
+
+
+ shellSortX sedgewickArray Elapsed Time using fhVectorOfInts6: 0 seconds.
+
+
+ shellSortX foundArray Elapsed Time using fhVectorOfInts6: 0 seconds.
+ 
+---------------------------------------------------------------------- */
+
+/* --------------------------- question answers ------------------------------
+ I believe that the Shell's implied gap sequence is slower than shellSortX()'s
+ explicit gap sequence because the implied sequence has to be calculated as it 
+ loops through, whereas the explicit sequence is already passed in and does not 
+ need to be calculated.
+---------------------------------------------------------------------------- */
+
+

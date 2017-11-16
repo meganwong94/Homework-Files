@@ -1,0 +1,296 @@
+#include <iostream>
+#include "FHsort.h"
+#include <time.h>
+
+using namespace std;
+
+template <typename Comparable>
+void quickSortX(FHvector<Comparable> & a, int rec_limit)
+{
+   if (rec_limit < 2)
+      return;
+   quickSortX(a, 0, a.size() - 1, rec_limit);
+}
+
+template <typename Comparable>
+void quickSortX(FHvector<Comparable> & a, int left, int right, int rec_limit)
+{
+   Comparable pivot;
+   int i, j;
+
+   if(left + rec_limit <= right)
+   {
+      pivot = median3(a, left, right);
+      for(i = left, j = right - 1; ; )
+      {
+         while( a[++i] < pivot )
+            ;
+         while( pivot < a[--j])
+            ;
+         if(i < j)
+            mySwapFH(a[i], a[j]);
+         else
+            break;
+      }
+
+      mySwapFH(a[i], a[right - 1]);  // restore pivot
+
+      // recursive calls on smaller sub-groups
+      quickSortX(a, left, i - 1, rec_limit);
+      quickSortX(a, i + 1, right, rec_limit);
+   }
+   else
+      // non-recursive escape valve - insertionSort
+      insertionSort(a, left, right);
+}
+
+#define ARRAY_SIZE 100000
+#define ARRAY_SIZE2 500000
+#define ARRAY_SIZE3 1000000
+
+int main()
+{
+   FHvector<int> fhVectorOfInts;
+   FHvector<int> fhVectorOfInts2;
+   FHvector<int> fhVectorOfInts3;
+
+   int arrayOfInts[ARRAY_SIZE];
+   int arrayOfInts2[ARRAY_SIZE2];
+   int arrayOfInts3[ARRAY_SIZE3];
+
+   for (int k = 0; k < ARRAY_SIZE; k++)
+   {
+      arrayOfInts[k] = rand() % ARRAY_SIZE;
+      fhVectorOfInts.push_back(arrayOfInts[k]);
+   }
+
+   for (int k = 0; k < ARRAY_SIZE2; k++)
+   {
+      arrayOfInts2[k] = rand() % ARRAY_SIZE2;
+      fhVectorOfInts2.push_back(arrayOfInts2[k]);
+   }
+
+   for (int k = 0; k < ARRAY_SIZE3; k++)
+   {
+      arrayOfInts3[k] = rand() % ARRAY_SIZE3;
+      fhVectorOfInts3.push_back(arrayOfInts3[k]);
+   }
+
+   clock_t startTime, stopTime;
+
+   cout << "Array size: " << ARRAY_SIZE << endl << endl;
+
+   cout << "Showing the largest jump in time: " << endl;
+
+   for (int i = 1; i <= 2; i++)
+   {
+      startTime = clock();  // ------------------ start
+
+      quickSortX(fhVectorOfInts, 2 * i);
+
+      stopTime = clock();  // ---------------------- stop
+      cout << "\nquickSortX Elapsed Time using fhVectorOfInts for recursion "
+      << endl << "limit of " << 2 * i << " : "
+      << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+      << " seconds." << endl;
+   }
+
+   cout << endl << "Now a table showing every 50 elements: " << endl;
+
+   for (int i = 1; i <= 150; i += 25)
+   {
+      startTime = clock();  // ------------------ start
+
+      quickSortX(fhVectorOfInts, 2 * i);
+
+      stopTime = clock();  // ---------------------- stop
+      cout << "\nquickSortX Elapsed Time using fhVectorOfInts for recursion "
+      << endl << "limit of " << 2 * i << " : "
+      << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+      << " seconds." << endl;
+   }
+
+   cout << endl << endl;
+
+   cout << "Array size: " << ARRAY_SIZE2 << endl << endl;
+
+   cout << "Showing the largest jump in time: " << endl;
+
+   for (int i = 1; i <= 2; i++)
+   {
+      startTime = clock();  // ------------------ start
+
+      quickSortX(fhVectorOfInts2, 2 * i);
+
+      stopTime = clock();  // ---------------------- stop
+      cout << "\nquickSortX Elapsed Time using fhVectorOfInts2 for recursion "
+      << endl << "limit of " << 2 * i << " : "
+      << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+      << " seconds." << endl;
+   }
+
+   cout << endl << "Now a table showing every 50 elements: " << endl;
+
+   for (int i = 1; i <= 150; i += 25)
+   {
+      startTime = clock();  // ------------------ start
+
+      quickSortX(fhVectorOfInts2, 2 * i);
+
+      stopTime = clock();  // ---------------------- stop
+      cout << "\nquickSortX Elapsed Time using fhVectorOfInts2 for recursion "
+      << endl << "limit of " << 2 * i << " : "
+      << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+      << " seconds." << endl;
+   }
+
+   cout << endl << endl;
+
+   cout << "Array size: " << ARRAY_SIZE3 << endl << endl;
+
+   cout << "Showing the largest jump in time: " << endl;
+
+   for (int i = 1; i <= 2; i++)
+   {
+      startTime = clock();  // ------------------ start
+
+      quickSortX(fhVectorOfInts3, 2 * i);
+
+      stopTime = clock();  // ---------------------- stop
+      cout << "\nquickSortX Elapsed Time using fhVectorOfInts3 for recursion "
+      << endl << "limit of " << 2 * i << " : "
+      << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+      << " seconds." << endl;
+   }
+
+   cout << endl << "Now a table showing every 50 elements: " << endl;
+
+   for (int i = 1; i <= 150; i += 25)
+   {
+      startTime = clock();  // ------------------ start
+
+      quickSortX(fhVectorOfInts3, 2 * i);
+
+      stopTime = clock();  // ---------------------- stop
+      cout << "\nquickSortX Elapsed Time using fhVectorOfInts3 for recursion "
+      << endl << "limit of " << 2 * i << " : "
+      << (double)(stopTime - startTime)/(double)CLOCKS_PER_SEC
+      << " seconds." << endl;
+   }
+}
+
+/* ---------------------------- run -------------------------------
+ Array size: 100000
+
+ Showing the largest jump in time:
+
+ quickSortX Elapsed Time using fhVectorOfInts for recursion
+ limit of 2 : 0.020812 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts for recursion
+ limit of 4 : 0.009103 seconds.
+
+ Now a table showing every 50 elements:
+
+ quickSortX Elapsed Time using fhVectorOfInts for recursion
+ limit of 2 : 0.009501 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts for recursion
+ limit of 52 : 0.006465 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts for recursion
+ limit of 102 : 0.006035 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts for recursion
+ limit of 152 : 0.006469 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts for recursion
+ limit of 202 : 0.005946 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts for recursion
+ limit of 252 : 0.00549 seconds.
+
+
+ Array size: 500000
+
+ Showing the largest jump in time:
+
+ quickSortX Elapsed Time using fhVectorOfInts2 for recursion
+ limit of 2 : 0.118062 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts2 for recursion
+ limit of 4 : 0.052095 seconds.
+
+ Now a table showing every 50 elements:
+
+ quickSortX Elapsed Time using fhVectorOfInts2 for recursion
+ limit of 2 : 0.056944 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts2 for recursion
+ limit of 52 : 0.039636 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts2 for recursion
+ limit of 102 : 0.038006 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts2 for recursion
+ limit of 152 : 0.036204 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts2 for recursion
+ limit of 202 : 0.039178 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts2 for recursion
+ limit of 252 : 0.038215 seconds.
+
+
+ Array size: 1000000
+
+ Showing the largest jump in time:
+
+ quickSortX Elapsed Time using fhVectorOfInts3 for recursion
+ limit of 2 : 0.25806 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts3 for recursion
+ limit of 4 : 0.107827 seconds.
+
+ Now a table showing every 50 elements:
+
+ quickSortX Elapsed Time using fhVectorOfInts3 for recursion
+ limit of 2 : 0.116701 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts3 for recursion
+ limit of 52 : 0.088032 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts3 for recursion
+ limit of 102 : 0.077767 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts3 for recursion
+ limit of 152 : 0.076115 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts3 for recursion
+ limit of 202 : 0.078421 seconds.
+
+ quickSortX Elapsed Time using fhVectorOfInts3 for recursion
+ limit of 252 : 0.07042 seconds.
+
+------------------------------------------------------------------ */
+
+/* --------------------- comments -------------------------
+Starting with recursion limits of every even number between 2 and 300, 
+I noticed that there was a huge jump in time between the recursion limit 
+of 2 and 4. The rest of the results were fairly flat and occasionally
+decreased by .01 of a second, but this jump in time really illustrates 
+how costly the recursive calls of quickSort are when array sizes are 
+smaller than 4. When showing every 50 recursion limits, it is easy
+to see that the time hardly changes between each of them, showing 
+that the difference in amount of recursive calls only affects 
+sorting by 1/100 of a second after a recursion limit of about 50.
+I believe it is that way because of how large the vectors are 
+that are being sorted. 99,700 vs. 99,950 elements using recursion
+vs. insertionSort really doesn't make that much of a difference, 
+but once almost the entire vector is forced to use recursion,
+that starts to become very costly. If I was to use an internal 
+recursion limit, I think I would definitely use a rec_limit 
+of around 100, since the time variances are pretty small
+after 100.
+--------------------------------------------------------- */
+

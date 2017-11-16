@@ -1,0 +1,742 @@
+// FHhashQPwFind.h 
+
+#ifndef FHhashQPwFind_h
+#define FHhashQPwFind_h
+
+#include "FHhashQP.h"
+
+int Hash(int key);
+int Hash(const EBookEntry & item);
+int Hash(const string & key);
+//string getKey(const EBookEntry & item);
+int getKey(const EBookEntry & item);
+
+template <class Object, typename KeyType>
+class FHhashQPwFind: public FHhashQP<Object>
+{
+public:
+   const Object find(const KeyType & key);
+   class NotFoundException {};
+
+protected:
+   int myHashKey(const KeyType & key) const;
+   int findPosKey( const KeyType & key ) const;
+};
+
+template <class Object, typename KeyType>
+const Object FHhashQPwFind<Object, KeyType>::find(const KeyType & key)
+{
+   if (this->mArray[findPosKey(key)].state == FHhashQP<Object>::EMPTY)
+      throw NotFoundException();
+   return this->mArray[findPosKey(key)].data;
+}
+
+template <class Object, typename KeyType>
+int FHhashQPwFind<Object, KeyType>::findPosKey(const KeyType & key) const
+{
+   int kthOddNum = 1;
+   int index = myHashKey(key);
+
+   while (this->mArray[index].state != FHhashQP<Object>::EMPTY
+          && getKey(this->mArray[index].data) != key)
+   {
+      index += kthOddNum;  // k squared = (k-1) squared + kth odd #
+      kthOddNum += 2;   // compute next odd #
+      if (index >= this->mTableSize)
+         index -= this->mTableSize;
+   }
+
+   return index;
+}
+
+template <class Object, typename KeyType>
+int FHhashQPwFind<Object, KeyType>::myHashKey(const KeyType & key) const
+{
+   int hashVal;
+
+   hashVal = Hash(key) % this->mTableSize;
+   if (hashVal < 0)
+      hashVal += this->mTableSize;
+
+   return hashVal;
+}
+
+#endif
+
+// main.cpp
+
+#include <iostream>
+#include "EBookEntry.h"
+#include "FHhashQPwFind.h"
+
+int getKey(const EBookEntry & item);
+//string getKey(const EBookEntry & item);
+void displayOneEBook(EBookEntry book);
+int Hash(int key) { return key; }
+int Hash(const string & key);
+int Hash(const EBookEntry & item);
+
+const static int NUM_RANDOM_INDICES = 25;
+
+int main()
+{
+   FHhashQPwFind<EBookEntry, int> hashTable; // for ID equality
+   //FHhashQPwFind<EBookEntry, string> hashTable; // for any string equality
+
+   EBookEntryReader bookInput("catalog-short4-nocr.txt");
+
+   EBookEntry::setSortType(EBookEntry::SORT_BY_ID);
+   //EBookEntry::setSortType(EBookEntry::SORT_BY_CREATOR);
+
+   if (bookInput.readError())
+   {
+      cout << "couldn't open " << bookInput.getFileName() << " for input.\n";
+      exit(1);
+   }
+
+   cout << bookInput.getFileName() << endl;
+   cout << bookInput.getNumBooks() << endl;
+
+   int arraySize = bookInput.getNumBooks();
+   for (int k = 0; k < arraySize; k++)
+      hashTable.insert(bookInput[k]);
+
+   int randArray[NUM_RANDOM_INDICES];
+
+   for (int j = 0; j < NUM_RANDOM_INDICES; j++)
+      randArray[j] = rand() % arraySize + 1;
+
+   for (int i = 0; i < NUM_RANDOM_INDICES; i++)
+      displayOneEBook(bookInput[randArray[i]]);
+
+   EBookEntry book;
+   cout << "The same random books from the hash table " << endl;
+   for (int k = 0; k < NUM_RANDOM_INDICES; k++)
+   {
+      try
+      {
+         book = hashTable.find(bookInput[randArray[k]].getETextNum());
+         //book = hashTable.find(bookInput[randArray[k]].getCreator());
+         displayOneEBook(book);
+      }
+      catch (...)
+      {
+         cout << "Not found.";
+      }
+      cout << endl;
+   }
+
+   try
+   {
+      book = hashTable.find( -3 );
+      //book = hashTable.find( "Jack Kerouac" );
+   }
+   catch (...)
+   {
+      cout << "Not found." << endl;
+   }
+}
+
+void displayOneEBook(EBookEntry book)
+{
+   cout << "   # "<< book.getETextNum() << "  ---------------" << endl;
+   cout << "   \"" << book.getTitle() <<"\"" << endl;
+   cout << "   by " << book.getCreator()  << endl;
+   cout << "   re: " << book.getSubject() << endl << endl;
+}
+
+// used for ID equality
+int getKey(const EBookEntry & item)
+{
+   return item.getETextNum();
+}
+
+ // used for author equality
+// string getKey(const EBookEntry & item) 
+// {
+//    return item.getCreator() ;
+// }
+
+
+int Hash(const EBookEntry & item)
+{
+   return Hash(getKey(item));
+}
+
+int Hash(const string & key)
+{
+   unsigned int k, retVal = 0;
+
+   for(k = 0; k < key.length( ); k++ )
+      retVal = 37 * retVal + key[k];
+
+   return retVal;
+}
+
+/* ------------ run using SORT_BY_CREATOR -------------
+ catalog-short4-nocr.txt
+ 4863
+ # 6632  ---------------
+ "A Popular History of Ireland : from the Earliest Period to the Emancipation of the Catholics — Volume 1"
+ by McGee, Thomas D'Arcy, 1825-1868
+ re: Ireland -- History
+
+ # 27681  ---------------
+ "The Last of the MohicansA Narrative of 1757"
+ by Cooper, James Fenimore, 1789-1851
+ re: Historical fiction
+
+ # 27495  ---------------
+ "The Girls of St. Olave's"
+ by Mackintosh, Mabel
+ re: PZ
+
+ # 29962  ---------------
+ "Celebrity"
+ by McKimmey, James, 1923-
+ re: Science fiction
+
+ # 27977  ---------------
+ "Austral EnglishA dictionary of Australasian words, phrases and usages with those aboriginal-Australian and Maori words which have become incorporated in the language, and the commoner scientific words that have had their origin in Australasia"
+ by Morris, Edward Ellis, 1843-1901
+ re: English language -- Australasia -- Dictionaries
+
+ # 27839  ---------------
+ "Only an Irish Girl"
+ by Duchess, 1855?-1897
+ re: PR
+
+ # 26700  ---------------
+ "SaroniaA Romance of Ancient Ephesus"
+ by Short, Richard
+ re: Ephesus (Extinct city) -- Fiction
+
+ # 30231  ---------------
+ "The Vote That Made the President"
+ by Field, David Dudley, 1805-1894
+ re: Presidents -- United States -- Election -- 1876
+
+ # 25609  ---------------
+ "A Child's Garden of Verses"
+ by Stevenson, Robert Louis, 1850-1894
+ re: Children's poetry, English
+
+ # 265  ---------------
+ "Kormáks saga. English"
+ by (no data found)
+ re: Kormákr Ögmundarson, ca. 935-970 -- Romances
+
+ # 5949  ---------------
+ "Beasley's Christmas Party"
+ by Tarkington, Booth, 1869-1946
+ re: (no data found)
+
+ # 10634  ---------------
+ "The Queen of Hearts, and Sing a Song for Sixpence"
+ by Caldecott, Randolph, 1846-1886
+ re: (no data found)
+
+ # 29682  ---------------
+ "Erdgeist (Earth-Spirit)A Tragedy in Four Acts"
+ by Wedekind, Frank, 1864-1918
+ re: Drama
+
+ # 25444  ---------------
+ "Dolly and IA Story for Little Folks"
+ by Optic, Oliver, 1822-1897
+ re: Conduct of life -- Juvenile fiction
+
+ # 5463  ---------------
+ "The Sisters — Volume 3"
+ by Ebers, Georg, 1837-1898
+ re: Egypt -- History -- 332-30 B.C. -- Fiction
+
+ # 26698  ---------------
+ "Privy SealHis Last Venture"
+ by Ford, Ford Madox, 1873-1939
+ re: Biographical fiction
+
+ # 29481  ---------------
+ "The Fifth String"
+ by Sousa, John Philip, 1854-1932
+ re: Love stories
+
+ # 606  ---------------
+ "Indian Why StoriesSparks from War Eagle's Lodge-Fire"
+ by Linderman, Frank Bird, 1869-1938
+ re: Tales -- North America
+
+ # 24750  ---------------
+ "Mizora: A ProphecyA MSS. Found Among the Private Papers of the Princess Vera Zarovitch"
+ by Lane, Mary E. Bradley
+ re: Science fiction
+
+ # 28275  ---------------
+ "Harper's Young People, December 30, 1879An Illustrated Weekly"
+ by Various
+ re: Children's periodicals, American
+
+ # 28377  ---------------
+ "Lessons of the war with Spain and other articles"
+ by Mahan, A. T. (Alfred Thayer), 1840-1914
+ re: United States -- Colonial question
+
+ # 14196  ---------------
+ "The Nervous Housewife"
+ by Myerson, Abraham, 1881-1948
+ re: Neurasthenia
+
+ # 28320  ---------------
+ "A Tramp's Walletstored by an English goldsmith during his wanderings in Germany and France"
+ by Duthie, William
+ re: Germany -- Description and travel
+
+ # 359  ---------------
+ "Good Stories for Holidays"
+ by Olcott, Frances Jenkins, 1872-1963
+ re: Children's literature
+
+ # 28772  ---------------
+ "Ellen of Villenskovand Other Ballads"
+ by (no data found)
+ re: PR
+
+ The same random books from the hash table
+ # 6634  ---------------
+ "A Popular History of Ireland : from the Earliest Period to the Emancipation of the Catholics — Complete"
+ by McGee, Thomas D'Arcy, 1825-1868
+ re: Ireland -- History
+
+
+ # 10149  ---------------
+ "Home as Found"
+ by Cooper, James Fenimore, 1789-1851
+ re: (no data found)
+
+
+ # 27495  ---------------
+ "The Girls of St. Olave's"
+ by Mackintosh, Mabel
+ re: PZ
+
+
+ # 29578  ---------------
+ "George Loves Gistla"
+ by McKimmey, James, 1923-
+ re: Science fiction
+
+
+ # 27977  ---------------
+ "Austral EnglishA dictionary of Australasian words, phrases and usages with those aboriginal-Australian and Maori words which have become incorporated in the language, and the commoner scientific words that have had their origin in Australasia"
+ by Morris, Edward Ellis, 1843-1901
+ re: English language -- Australasia -- Dictionaries
+
+
+ # 27839  ---------------
+ "Only an Irish Girl"
+ by Duchess, 1855?-1897
+ re: PR
+
+
+ # 26700  ---------------
+ "SaroniaA Romance of Ancient Ephesus"
+ by Short, Richard
+ re: Ephesus (Extinct city) -- Fiction
+
+
+ # 30231  ---------------
+ "The Vote That Made the President"
+ by Field, David Dudley, 1805-1894
+ re: Presidents -- United States -- Election -- 1876
+
+
+ # 281  ---------------
+ "Father Damien, an Open Letter to the Reverend Dr. Hyde of Honolulu"
+ by Stevenson, Robert Louis, 1850-1894
+ re: Damien, Father, 1840-1889
+
+
+ # 28351  ---------------
+ "Dick and His Cat and Other Tales"
+ by (no data found)
+ re: Animals -- Juvenile fiction
+
+
+ # 5949  ---------------
+ "Beasley's Christmas Party"
+ by Tarkington, Booth, 1869-1946
+ re: (no data found)
+
+
+ # 28557  ---------------
+ "The Panjandrum Picture Book"
+ by Caldecott, Randolph, 1846-1886
+ re: Nursery rhymes
+
+
+ # 29682  ---------------
+ "Erdgeist (Earth-Spirit)A Tragedy in Four Acts"
+ by Wedekind, Frank, 1864-1918
+ re: Drama
+
+
+ # 28038  ---------------
+ "Watch and Waitor The Young Fugitives"
+ by Optic, Oliver, 1822-1897
+ re: Fugitive slaves -- Juvenile fiction
+
+
+ # 28898  ---------------
+ "The Historical Novels Of Georg EbersA Linked Index to the Project Gutenberg Editions"
+ by Ebers, Georg, 1837-1898
+ re: Historical fiction
+
+
+ # 26698  ---------------
+ "Privy SealHis Last Venture"
+ by Ford, Ford Madox, 1873-1939
+ re: Biographical fiction
+
+
+ # 29481  ---------------
+ "The Fifth String"
+ by Sousa, John Philip, 1854-1932
+ re: Love stories
+
+
+ # 606  ---------------
+ "Indian Why StoriesSparks from War Eagle's Lodge-Fire"
+ by Linderman, Frank Bird, 1869-1938
+ re: Tales -- North America
+
+
+ # 24750  ---------------
+ "Mizora: A ProphecyA MSS. Found Among the Private Papers of the Princess Vera Zarovitch"
+ by Lane, Mary E. Bradley
+ re: Science fiction
+
+
+ # 28712  ---------------
+ "The American Missionary — Volume 54, No. 3, October, 1900"
+ by Various
+ re: Congregational churches -- Missions -- Periodicals
+
+
+ # 28377  ---------------
+ "Lessons of the war with Spain and other articles"
+ by Mahan, A. T. (Alfred Thayer), 1840-1914
+ re: United States -- Colonial question
+
+
+ # 14196  ---------------
+ "The Nervous Housewife"
+ by Myerson, Abraham, 1881-1948
+ re: Neurasthenia
+
+
+ # 28320  ---------------
+ "A Tramp's Walletstored by an English goldsmith during his wanderings in Germany and France"
+ by Duthie, William
+ re: Germany -- Description and travel
+
+
+ # 359  ---------------
+ "Good Stories for Holidays"
+ by Olcott, Frances Jenkins, 1872-1963
+ re: Children's literature
+
+
+ # 28351  ---------------
+ "Dick and His Cat and Other Tales"
+ by (no data found)
+ re: Animals -- Juvenile fiction
+
+
+ Not found.
+
+---------------------------------------------- */
+
+/* ----------------- run using SORT_BY_ID ------------
+ catalog-short4-nocr.txt
+ 4863
+ # 6632  ---------------
+ "A Popular History of Ireland : from the Earliest Period to the Emancipation of the Catholics — Volume 1"
+ by McGee, Thomas D'Arcy, 1825-1868
+ re: Ireland -- History
+
+ # 27681  ---------------
+ "The Last of the MohicansA Narrative of 1757"
+ by Cooper, James Fenimore, 1789-1851
+ re: Historical fiction
+
+ # 27495  ---------------
+ "The Girls of St. Olave's"
+ by Mackintosh, Mabel
+ re: PZ
+
+ # 29962  ---------------
+ "Celebrity"
+ by McKimmey, James, 1923-
+ re: Science fiction
+
+ # 27977  ---------------
+ "Austral EnglishA dictionary of Australasian words, phrases and usages with those aboriginal-Australian and Maori words which have become incorporated in the language, and the commoner scientific words that have had their origin in Australasia"
+ by Morris, Edward Ellis, 1843-1901
+ re: English language -- Australasia -- Dictionaries
+
+ # 27839  ---------------
+ "Only an Irish Girl"
+ by Duchess, 1855?-1897
+ re: PR
+
+ # 26700  ---------------
+ "SaroniaA Romance of Ancient Ephesus"
+ by Short, Richard
+ re: Ephesus (Extinct city) -- Fiction
+
+ # 30231  ---------------
+ "The Vote That Made the President"
+ by Field, David Dudley, 1805-1894
+ re: Presidents -- United States -- Election -- 1876
+
+ # 25609  ---------------
+ "A Child's Garden of Verses"
+ by Stevenson, Robert Louis, 1850-1894
+ re: Children's poetry, English
+
+ # 265  ---------------
+ "Kormáks saga. English"
+ by (no data found)
+ re: Kormákr Ögmundarson, ca. 935-970 -- Romances
+
+ # 5949  ---------------
+ "Beasley's Christmas Party"
+ by Tarkington, Booth, 1869-1946
+ re: (no data found)
+
+ # 10634  ---------------
+ "The Queen of Hearts, and Sing a Song for Sixpence"
+ by Caldecott, Randolph, 1846-1886
+ re: (no data found)
+
+ # 29682  ---------------
+ "Erdgeist (Earth-Spirit)A Tragedy in Four Acts"
+ by Wedekind, Frank, 1864-1918
+ re: Drama
+
+ # 25444  ---------------
+ "Dolly and IA Story for Little Folks"
+ by Optic, Oliver, 1822-1897
+ re: Conduct of life -- Juvenile fiction
+
+ # 5463  ---------------
+ "The Sisters — Volume 3"
+ by Ebers, Georg, 1837-1898
+ re: Egypt -- History -- 332-30 B.C. -- Fiction
+
+ # 26698  ---------------
+ "Privy SealHis Last Venture"
+ by Ford, Ford Madox, 1873-1939
+ re: Biographical fiction
+
+ # 29481  ---------------
+ "The Fifth String"
+ by Sousa, John Philip, 1854-1932
+ re: Love stories
+
+ # 606  ---------------
+ "Indian Why StoriesSparks from War Eagle's Lodge-Fire"
+ by Linderman, Frank Bird, 1869-1938
+ re: Tales -- North America
+
+ # 24750  ---------------
+ "Mizora: A ProphecyA MSS. Found Among the Private Papers of the Princess Vera Zarovitch"
+ by Lane, Mary E. Bradley
+ re: Science fiction
+
+ # 28275  ---------------
+ "Harper's Young People, December 30, 1879An Illustrated Weekly"
+ by Various
+ re: Children's periodicals, American
+
+ # 28377  ---------------
+ "Lessons of the war with Spain and other articles"
+ by Mahan, A. T. (Alfred Thayer), 1840-1914
+ re: United States -- Colonial question
+
+ # 14196  ---------------
+ "The Nervous Housewife"
+ by Myerson, Abraham, 1881-1948
+ re: Neurasthenia
+
+ # 28320  ---------------
+ "A Tramp's Walletstored by an English goldsmith during his wanderings in Germany and France"
+ by Duthie, William
+ re: Germany -- Description and travel
+
+ # 359  ---------------
+ "Good Stories for Holidays"
+ by Olcott, Frances Jenkins, 1872-1963
+ re: Children's literature
+
+ # 28772  ---------------
+ "Ellen of Villenskovand Other Ballads"
+ by (no data found)
+ re: PR
+
+ The same random books from the hash table
+ # 6632  ---------------
+ "A Popular History of Ireland : from the Earliest Period to the Emancipation of the Catholics — Volume 1"
+ by McGee, Thomas D'Arcy, 1825-1868
+ re: Ireland -- History
+
+
+ # 27681  ---------------
+ "The Last of the MohicansA Narrative of 1757"
+ by Cooper, James Fenimore, 1789-1851
+ re: Historical fiction
+
+
+ # 27495  ---------------
+ "The Girls of St. Olave's"
+ by Mackintosh, Mabel
+ re: PZ
+
+
+ # 29962  ---------------
+ "Celebrity"
+ by McKimmey, James, 1923-
+ re: Science fiction
+
+
+ # 27977  ---------------
+ "Austral EnglishA dictionary of Australasian words, phrases and usages with those aboriginal-Australian and Maori words which have become incorporated in the language, and the commoner scientific words that have had their origin in Australasia"
+ by Morris, Edward Ellis, 1843-1901
+ re: English language -- Australasia -- Dictionaries
+
+
+ # 27839  ---------------
+ "Only an Irish Girl"
+ by Duchess, 1855?-1897
+ re: PR
+
+
+ # 26700  ---------------
+ "SaroniaA Romance of Ancient Ephesus"
+ by Short, Richard
+ re: Ephesus (Extinct city) -- Fiction
+
+
+ # 30231  ---------------
+ "The Vote That Made the President"
+ by Field, David Dudley, 1805-1894
+ re: Presidents -- United States -- Election -- 1876
+
+
+ # 25609  ---------------
+ "A Child's Garden of Verses"
+ by Stevenson, Robert Louis, 1850-1894
+ re: Children's poetry, English
+
+
+ # 265  ---------------
+ "Kormáks saga. English"
+ by (no data found)
+ re: Kormákr Ögmundarson, ca. 935-970 -- Romances
+
+
+ # 5949  ---------------
+ "Beasley's Christmas Party"
+ by Tarkington, Booth, 1869-1946
+ re: (no data found)
+
+
+ # 10634  ---------------
+ "The Queen of Hearts, and Sing a Song for Sixpence"
+ by Caldecott, Randolph, 1846-1886
+ re: (no data found)
+
+
+ # 29682  ---------------
+ "Erdgeist (Earth-Spirit)A Tragedy in Four Acts"
+ by Wedekind, Frank, 1864-1918
+ re: Drama
+
+
+ # 25444  ---------------
+ "Dolly and IA Story for Little Folks"
+ by Optic, Oliver, 1822-1897
+ re: Conduct of life -- Juvenile fiction
+
+
+ # 5463  ---------------
+ "The Sisters — Volume 3"
+ by Ebers, Georg, 1837-1898
+ re: Egypt -- History -- 332-30 B.C. -- Fiction
+
+
+ # 26698  ---------------
+ "Privy SealHis Last Venture"
+ by Ford, Ford Madox, 1873-1939
+ re: Biographical fiction
+
+
+ # 29481  ---------------
+ "The Fifth String"
+ by Sousa, John Philip, 1854-1932
+ re: Love stories
+
+
+ # 606  ---------------
+ "Indian Why StoriesSparks from War Eagle's Lodge-Fire"
+ by Linderman, Frank Bird, 1869-1938
+ re: Tales -- North America
+
+
+ # 24750  ---------------
+ "Mizora: A ProphecyA MSS. Found Among the Private Papers of the Princess Vera Zarovitch"
+ by Lane, Mary E. Bradley
+ re: Science fiction
+
+
+ # 28275  ---------------
+ "Harper's Young People, December 30, 1879An Illustrated Weekly"
+ by Various
+ re: Children's periodicals, American
+
+
+ # 28377  ---------------
+ "Lessons of the war with Spain and other articles"
+ by Mahan, A. T. (Alfred Thayer), 1840-1914
+ re: United States -- Colonial question
+
+
+ # 14196  ---------------
+ "The Nervous Housewife"
+ by Myerson, Abraham, 1881-1948
+ re: Neurasthenia
+
+
+ # 28320  ---------------
+ "A Tramp's Walletstored by an English goldsmith during his wanderings in Germany and France"
+ by Duthie, William
+ re: Germany -- Description and travel
+
+
+ # 359  ---------------
+ "Good Stories for Holidays"
+ by Olcott, Frances Jenkins, 1872-1963
+ re: Children's literature
+
+
+ # 28772  ---------------
+ "Ellen of Villenskovand Other Ballads"
+ by (no data found)
+ re: PR
+
+
+ Not found.
+ 
+ ------------------------------------------ */
+
+

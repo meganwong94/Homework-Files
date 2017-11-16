@@ -1,0 +1,231 @@
+// FHsplayTree
+
+#ifndef FHSPLAYTREE_H
+#define FHSPLAYTREE_H
+#include "FHsearch_tree.h"
+
+template <class Comparable>
+class FHsplayTree : public FHsearch_tree<Comparable>
+{
+public:
+   FHsplayTree() : FHsearch_tree<Comparable>() {}
+   bool insert(const Comparable &x);
+   bool remove(const Comparable &x);
+   bool contains(const Comparable &x) { return find(x) != NULL; }
+   const Comparable &find(const Comparable& x);
+   const Comparable &showRoot() { return this->mRoot->data; }
+protected:
+   void splay(FHs_treeNode<Comparable> *&root, const Comparable& x);
+   void rotateWithLeftChild(FHs_treeNode<Comparable> *& k2);
+   void rotateWithRightChild(FHs_treeNode<Comparable> *& k2);
+};
+
+template <class Comparable>
+void FHsplayTree<Comparable>::splay(FHs_treeNode<Comparable> *&root, const Comparable& x)
+{
+   FHs_treeNode<Comparable> *leftTree = NULL, *rightTree = NULL,
+   *leftTreeMax = NULL, *rightTreeMin = NULL;
+   
+   while (root != NULL)
+   {
+      if (x < root->data)
+      {
+         if (root->lftChild == NULL)
+            break;
+
+         if (x < root->lftChild->data)
+         {
+            rotateWithLeftChild(root);
+            if (root->lftChild == NULL)
+               break;
+         }
+
+         rightTreeMin->lftChild = root;
+         root = root->lftChild;
+      }
+
+      if (root->data < x)
+      {
+         if (root->rtChild == NULL)
+            break;
+
+         if (root->rtChild->data < x)
+         {
+            rotateWithRightChild(root);
+            if (root->rtChild == NULL)
+               break;
+         }
+
+         leftTreeMax->rtChild = root;
+         root = root->rtChild;
+      }
+
+      else
+         break;
+   }
+
+   if (leftTree != NULL)
+   {
+      leftTreeMax->rtChild = root->lftChild;
+      root->lftChild = leftTree;
+   }
+
+   if (rightTree != NULL)
+   {
+      rightTreeMin->lftChild = root->rtChild;
+      root->rtChild = rightTree;
+   }
+}
+
+template <class Comparable>
+bool FHsplayTree<Comparable>::insert(const Comparable &x)
+{
+   FHs_treeNode<Comparable> *newNode;
+   newNode->data = x;
+
+   if (this->mRoot == NULL)
+   {
+      this->mRoot = newNode;
+      this->mSize++;
+      return true;
+   }
+
+   splay(this->mRoot, x);
+
+   if (x < this->mRoot->data)
+   {
+      newNode->lftChild = this->mRoot->lftChild;
+      newNode->rtChild = this->mRoot;
+      this->mRoot = newNode;
+      return true;
+   }
+
+   if (this->mRoot->data < x)
+   {
+      newNode->lftChild = this->mRoot;
+      newNode->rtChild = this->mRoot->rtChild;
+      this->mRoot = newNode;
+      return true;
+   }
+
+   return false;
+}
+
+template <class Comparable>
+bool FHsplayTree<Comparable>::remove(const Comparable &x)
+{
+   FHs_treeNode<Comparable> *newRoot;
+
+   if (this->mRoot == NULL)
+      return false;
+
+   splay(this->mRoot, x);
+
+   if (x < this->mRoot->data || this->mRoot->data < x)
+      return false;
+
+   if (this->mRoot->lftChild == NULL)
+      newRoot = this->mRoot->rtChild;
+
+   else
+   {
+      newRoot = this->mRoot->lftChild;
+      splay(newRoot, x);
+      newRoot->rtChild = this->mRoot->rtChild;
+   }
+
+   delete this->mRoot;
+   this->mRoot = newRoot;
+   return true;
+}
+
+template <class Comparable>
+const Comparable &FHsplayTree<Comparable>::find(const Comparable &x)
+{
+   FHs_treeNode<Comparable> *resultNode;
+
+   splay(this->mRoot, x);
+   resultNode = FHsearch_tree<Comparable>::find(this->mRoot, x);
+   if (resultNode == NULL)
+      throw typename FHsearch_tree<Comparable>::NotFoundException();
+   return resultNode->data;
+}
+
+template <class Comparable>
+void FHsplayTree<Comparable>::rotateWithLeftChild(FHs_treeNode<Comparable> * & k2 )
+{
+   FHs_treeNode<Comparable> *k1 = k2->lftChild;
+   k2->lftChild = k1->rtChild;
+   k1->rtChild = k2;
+   k2 = k1;
+}
+
+template <class Comparable>
+void FHsplayTree<Comparable>::rotateWithRightChild(FHs_treeNode<Comparable> * & k2 )
+{
+   FHs_treeNode<Comparable> *k1 = k2->rtChild;
+   k2->rtChild = k1->lftChild;
+   k1->lftChild = k2;
+   k2 = k1;
+}
+
+#endif
+
+
+// main
+
+#include <iostream> 
+#include "FHsplayTree.h" 
+using namespace std;
+
+template <typename T>
+class PrintObject
+{
+public:
+   void operator()(const T& obj)
+   {
+      cout << obj << " ";
+   }
+};
+
+int main()
+{
+   FHsplayTree<int> searchTree;
+   PrintObject<int> intPrinter;
+
+   searchTree.traverse(intPrinter);
+
+   cout << "Initial size: " << searchTree.size() << endl;
+   for (int k = 1; k <= 32; k++)
+      searchTree.insert(k);
+   cout << "New size: " << searchTree.size() << endl;
+
+   cout << "\nTraversal: \n";
+   searchTree.traverse(intPrinter);
+   cout << endl << endl;
+
+   for (int k = -1; k < 10; k++)
+   {
+      // alt to find() - different error return
+      // searchTree.contains(k);
+
+      try
+      {
+         searchTree.find(k);
+      }
+      catch(...)
+      {
+         cout << " oops ";
+      }
+
+      cout << "splay " << k << " --> root: " << searchTree.showRoot()
+           << " height: " << searchTree.showHeight() << endl;
+   }
+
+   return 0;
+}
+
+/* ------ run -------
+ Initial size: 0
+ Program ended with exit code: 9
+------------------- */
