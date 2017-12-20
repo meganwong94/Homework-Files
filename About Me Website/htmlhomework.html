@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CIS 2277</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script>
+  	function myFunction() {
+		document.getElementById('par1').innerHTML = "Switch this with the sentence above!"
+		document.getElementById('par2').innerHTML = "Switch this with the sentence below!"
+
+	}
+	function myFunction1() {
+    var x, text;
+
+    // Get the value of the input field with id="numb"
+    x = document.getElementById("numb1").value;
+    var i = 1
+
+    for (j = 1; j <= x; j++) {
+        i = i * j;
+    }
+    text = "The factorial is " + i;
+    document.getElementById('demo').innerHTML = text;   
+    }
+    function myFunction2() {
+    var x, text;
+
+    // Get the value of the input field with id="numb"
+    x = document.getElementById("numb2").value;
+    text = ""
+
+    while (x > 0) {
+    	text += "ha ";
+    	x--;
+    }
+    document.getElementById('demo1').innerHTML = text;   
+    }
+    function rockPaperScissors() {
+  	var text;
+
+    for (i = 0; i < 3; i++) {
+  	  var userChoice = document.getElementById('rps').value;
+  	  var computerChoice = Math.floor(Math.random() * 3) + 1; 
+
+  	  if (userChoice == 1) {
+  	  	document.getElementById('user').src = "rock.jpg";
+  	  	if (computerChoice == 1) {
+  	  		document.getElementById('computer').src = "rock.jpg";
+  	  		text = "It's a tie!";
+  	    }
+  	  	else if (computerChoice == 2) {
+  	  		document.getElementById('computer').src = "paper.jpg";
+  	  		text = "You lose!";
+  	  	}
+  	  	else {
+  	  		document.getElementById('computer').src = "scissors.jpg";
+  	  		text = "You win!";
+  	  	}
+  	  } else if (userChoice == 2) {
+  	  	document.getElementById('user').src = "paper.jpg";
+  	  	if (computerChoice == 1) {
+  	  		document.getElementById('computer').src = "rock.jpg";
+  	  		text = "You win!";
+  	  	}
+  	  	else if (computerChoice == 2) {
+  	  		document.getElementById('computer').src = "paper.jpg";
+  	  		text = "It's a tie!";
+  	  	}
+  	  	else {
+  	  		document.getElementById('computer').src = "scissors.jpg";
+  	  		text = "You lose!";
+  	  	}
+  	  } if (userChoice == 3) {
+  	  		document.getElementById('user').src = "scissors.jpg";
+  	  		if (computerChoice == 1) {
+  	  			document.getElementById('computer').src = "rock.jpg";
+  	  			text = "You lose!";
+  	  		}
+  	  		else if (computerChoice == 2) {
+  	  			document.getElementById('computer').src = "paper.jpg";
+  	  			text = "You win!";
+  	  		}
+  	  		else {
+  	  			document.getElementById('computer').src = "scissors.jpg";
+  	  			text = "It's a tie!";
+  	  		}
+  	  }
+  	  document.getElementById('demo2').innerHTML = text;
+    }
+	}
+	var board, zx, zy, clicks, possibles, clickCounter, oldzx = -1, oldzy = -1;
+function getPossibles() {
+    var ii, jj, cx = [-1, 0, 1, 0], cy = [0, -1, 0, 1];
+    possibles = [];
+    for(var i = 0; i < 4; i++) {
+        ii = zx + cx[i]; jj = zy + cy[i];
+        if(ii < 0 || ii > 3 || jj < 0 || jj > 3) continue;
+        possibles.push({ x: ii, y: jj });
+    }
+}
+function updateBtns() {
+    var b, v, id;
+    for(var j = 0; j < 4; j++) {
+        for(var i = 0; i < 4; i++) {
+            id = "btn" + (i + j * 4);
+            b = document.getElementById(id);
+            v = board[i][j];
+            if(v < 16) {
+                b.innerHTML = ("" + v);
+                b.className = "button"
+            }
+            else {
+                b.innerHTML = ("");
+                b.className = "empty";
+            }
+        }
+    }
+    clickCounter.innerHTML = "Clicks: " + clicks;
+}
+function shuffle() {
+    var v = 0, t; 
+    do {
+        getPossibles();
+        while (true) {
+            t = possibles[Math.floor(Math.random() * possibles.length)];
+            console.log(t.x, oldzx, t.y, oldzy)
+            if (t.x != oldzx || t.y != oldzy) 
+            	break;
+        }
+        oldzx = zx; oldzy = zy;
+        board[zx][zy] = board[t.x][t.y];
+        zx = t.x; zy = t.y;
+        board[zx][zy] = 16; 
+    } while(++v < 200);
+}
+function restart() {
+    shuffle();
+    clicks = 0;
+    updateBtns();
+}
+function checkFinished() {
+    var a = 0;
+    for(var j = 0; j < 4; j++) {
+        for(var i = 0; i < 4; i++) {
+            if(board[i][j] < a) return false;
+            a = board[i][j];
+        }
+    }
+    return true;
+}
+function btnHandle(e) {
+    getPossibles();
+    var c = e.target.i, r = e.target.j, p = -1;
+    for(var i = 0; i < possibles.length; i++) {
+        if(possibles[i].x == c && possibles[i].y == r) {
+            p = i;
+            break;
+        }
+    }
+    if(p > -1) {
+        clicks++;
+        var t = possibles[p];
+        board[zx][zy] = board[t.x][t.y];
+        zx = t.x; zy = t.y;
+        board[zx][zy] = 16;
+        updateBtns();
+        if(checkFinished()) {
+            alert("WELL DONE!");
+            restart();
+        }
+    }
+}
+function createBoard() {
+    board = new Array(4);
+    for(var i = 0; i < 4; i++) {
+        board[i] = new Array(4);
+    }
+    for(var j = 0; j < 4; j++) {
+        for(var i = 0; i < 4; i++) {
+            board[i][j] = (i + j * 4) + 1;
+        }
+    }
+    zx = zy = 3; 
+    board[zx][zy] = 16;
+}
+function createBtns() {
+    var b, d = document.createElement( "div" );
+    d.className += "board";
+    document.body.appendChild( d );
+    for(var j = 0; j < 4; j++) {
+        for(var i = 0; i < 4; i++) {
+            b = document.createElement("button");
+            b.id = "btn" + (i + j * 4);
+            b.i = i; b.j = j;
+            b.addEventListener("click", btnHandle, false);
+            b.appendChild(document.createTextNode(""));
+            d.appendChild(b);
+        }
+    }
+    clickCounter = document.createElement("p");
+    clickCounter.className += "txt";
+    document.body.appendChild(clickCounter);
+}
+function start() {
+    createBtns();
+    createBoard();
+    restart();
+}
+  </script>
+  <script>
+  	function loadMovie() {
+      var str = document.getElementById("movie").value;
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+       var myObj = JSON.parse(this.responseText);
+        document.getElementById("movieTitle").innerHTML = myObj.Title;
+        document.getElementById("releaseDate").innerHTML = myObj.Released;
+        document.getElementById("plot").innerHTML = myObj.Plot;
+        document.getElementById("runtime").innerHTML = myObj.Runtime;
+        document.getElementById("genre").innerHTML = myObj.Genre;
+        document.getElementById("poster").src = myObj.Poster;
+
+
+      }
+    };
+    xhttp.open("GET", "http://www.omdbapi.com/?t=" + str + "&apikey=d51eba16", true);
+    xhttp.send();
+    }
+  </script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+  <style>
+  body {
+  	font: 20px Montserrat, sans-serif;
+  	line-height: 1.8;
+  }
+  body:before { 
+    content: "";
+    position: fixed;
+    top: -10px;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    z-index: 100;
+    -webkit-box-shadow: 0px 0px 10px rgba(0,0,0,.8);
+    -moz-box-shadow: 0px 0px 10px rgba(0,0,0,.8);
+    box-shadow: 0px 0px 10px rgba(0,0,0,.8);
+  }
+  .bg-1 { 
+      background-color: white;
+      color: #808080;
+      width: 700px;
+      padding: 70px;
+  }
+  .bg-2 {
+      background-color: #adebeb;
+      padding: 70px;
+  }
+  .navbar {
+      padding-top: 15px;
+      padding-bottom: 15px;
+      border: 0;
+      border-radius: 0;
+      margin-bottom: 0;
+      font-size: 12px;
+      letter-spacing: 5px;
+  }
+  .navbar-nav  li a:hover {
+      color: #1abc9c !important;
+  }
+  html, body {
+    	padding:0; 
+    	margin:0;
+    	color:#111;
+    }
+
+    .txt {
+    	color:#660066;
+    	text-align:center;
+    	font-family: "American Typewriter";
+    	font-size:5vh
+    }
+
+    .board {
+    	padding:0;
+    	margin:auto;
+    	width:33vh;
+    	height:33vh
+    }
+
+    .button, .empty {
+    	border:0;
+    	font-size:3.5vh;
+    	font-family: "American Typewriter";
+    	margin:0.5vh;
+    	padding:0;
+    	height:6vh;
+    	width:7.25vh;
+    	line-height:5vh;
+        vertical-align:middle;
+        background:#bfbfbf;
+        text-align:center;
+        border-radius:3px;
+        cursor:pointer;
+        float:left
+    }
+    table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  td, th {
+    border: 1px solid #595959;
+    text-align: left;
+    padding: 8px;
+  }
+
+  tr:nth-child(even) {
+    background-color: #dddddd;
+  }
+  .dropbtn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {background-color: #f1f1f1}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover .dropbtn {
+    background-color: #3e8e41;
+}
+
+  </style>
+</head>
+<body>
+	<nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>                         
+      </button>
+      <a class="navbar-brand" href="aboutme.html">ME</a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="aboutpage.html">ABOUT</a></li>
+        <li><a href="myhometown.html">MY HOMETOWN</a></li>
+        <li><a href="htmlhomework.html">CIS 2277</a></li>
+        <li><a href="resume.html">RESUME</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="container-fluid bg-2 text-center">
+<div class="dropdown">
+  <button class="dropbtn">HTML Homework</button>
+  <div class="dropdown-content">
+    <a href="WebHW1.2.html" target="_blank">Table</a>
+    <a href="WebHW1.html" target="_blank">List w/ Picture</a>
+    <a href="WebHW2.1.html" target="_blank">Links</a>
+    <a href="WebHW2.2.html" target="_blank">Form</a>
+    <a href="WebHW2.4.html" target="_blank">Bugs</a>
+    <a href="WebHW2.html" target="_blank">Column Forms</a>
+    <a href="WebHW2.3.html" target="_blank">UL Lists</a>
+  </div>
+</div>
+</div>
+<div class="container-fluid bg-1 text-center">
+	<p id="par1">Switch this with the sentence below!</p>
+	<p id="par2">Switch this with the sentence above!</p>
+	<button type="button" onclick="myFunction()">Switch paragraphs</button>
+</div>
+<div class="container-fluid bg-2 text-center">
+	<p>Please input a number:</p>
+	<input id="numb1">
+	<button type="button" onclick="myFunction1()">Calculate factorial</button>
+	<p id="demo"></p>
+</div>
+<div class="container-fluid bg-1 text-center">
+	<p>Please input a number:</p>
+	<input id="numb2">
+	<button type="button" onclick="myFunction2()">Print ha's</button>
+	<p id="demo1"></p>
+</div>
+<div class="container-fluid bg-2 text-center">
+	<p>Please choose rock (1), paper (2), or scissors (3):</p>
+	<input id="rps">
+	<button type="button" onclick="rockPaperScissors()">Submit</button>
+	
+	<p id="demo2"></p>
+	<br>
+	<p>Your choice:</p>
+	<img id="user" src="">
+	<br>
+	<p>Computer's choice:</p>
+	<img id="computer" src="">
+</div>
+<div class="container-fluid bg-1 text-center">
+  <p>Please enter the title of the movie you wish to find:</p>
+  <input id="movie">
+  <button type="button" onclick="loadMovie()">Submit</button>
+</div>
+<div class="container-fluid bg-2 text-center">
+  <table>
+  <tr>
+    <th>Title</th>
+    <th>Date Released</th>
+    <th>Plot</th>
+    <th>Runtime</th>
+    <th>Genre</th>
+    <th>Poster</th>
+  </tr>
+  <tr>
+    <td id="movieTitle"></td>
+    <td id="releaseDate"></td>
+    <td id="plot"></td>
+    <td id="runtime"></td>
+    <td id="genre"></td>
+    <td><img id="poster"></td>
+  </tr>
+</table>
+</div>
+<div class="container-fluid bg-1 text-center">
+  <button type="button" onclick="start()">Start 15 Puzzle</button>
+</div>
+
+</body>
+</html>
