@@ -140,141 +140,56 @@ void SparseMat<Object>::showSubSquare(int start, int size)
 // main.cpp
 
 #include <iostream>
-#include "FHvector.h"
-#include "FHlist.h"
 using namespace std;
 
-template <class Object>
-class MatNode
+#include "FHvector.h"
+#include "FHlist.h"
+#include "FHsparseMatrix.h"
+
+#define MAT_SIZE 100000 
+typedef SparseMat<float> SpMat;
+
+// --------------- main ---------------
+int main()
 {
-protected:
-   int col;
-public:
-   Object data;
+   SpMat mat(MAT_SIZE, MAT_SIZE, 0); // 100000 x 100000 filled with 0
 
-   MatNode(int cl = 0, Object dt = Object()) : col(cl), data(dt) {}
-   int getCol() const { return col; }
-
-   const Object & operator=(const Object &x) { return (data = x);} \
-};
-
-template <class Object>
-class SparseMat
-{
-protected:
-   typedef FHlist< MatNode<Object> > MatRow;
-   typedef FHvector<MatRow> MasterCol;
-
-   MasterCol rows;
-   Object defaultVal;
-   int rowSize, colSize;
-public:
-   SparseMat(int r, int c, const Object & defaultVal);
-   const Object & get(int r, int c) const;
-   bool set(int r, int c, const Object &x);
-   void clear();
-   void showSubSquare(int start, int size);
-   class MatrixBoundsViolation { };
-};
-
-template <class Object>
-SparseMat<Object>::SparseMat(int r, int c, const Object & defaultVal)
-{
-   if (r >= 1)
+   // test mutators
+   mat.set(2, 5, 10);
+   mat.set(2, 5, 35); // should overwrite the 10
+   mat.set(3, 9, 21);
+   try
    {
-      rowSize = r;
-      rows.resize(r);
+      mat.set(MAT_SIZE, 1, 5); // should fail silently
    }
-   if (c >= 1)
+   catch (...)
    {
-      colSize = c;
+      cout << "oops" << endl;
    }
+   mat.set(9, 9, mat.get(3, 9)); // should copy the 21 here
+   mat.set(4,4, -9);
+   mat.set(4,4, 0); // should remove the -9 node entirely
+   mat.set(MAT_SIZE-1, MAT_SIZE-1, 99);
+   // test accessors and exceptions
+   try
+   {
+      cout << mat.get(7, 8) << endl;
+      cout << mat.get(2, 5) << endl;
+      cout << mat.get(9, 9) << endl;
+      cout << mat.get(-4, 7) << endl; // should throw an exception
+   }
+   catch (...)
+   {
+      cout << "oops" << endl;
+   }
+   // show top left 15x15
+   mat.showSubSquare(0, 15);
 
-   this->defaultVal = defaultVal;
+   // show bottom right 15x15
+   mat.showSubSquare(MAT_SIZE - 15, 15);
 }
 
-template <class Object>
-const Object &SparseMat<Object>::get(int r, int c) const
-{
-   typename MatRow::const_iterator iter;
 
-   if (r > rowSize || c > colSize)
-      throw MatrixBoundsViolation();
-
-   for (iter = rows[r].begin(); iter != rows[r].end(); iter++)
-   {
-      if (c == (*iter).getCol())
-      {
-         return (*iter).data;
-      }
-   }
-   return defaultVal;
-}
-
-template <class Object>
-bool SparseMat<Object>::set(int r, int c, const Object &x)
-{
-   typename MatRow::iterator iter;
-   MatNode<Object> newNode(c, x);
-
-   if (r >= rowSize || c >= colSize)
-      return false;
-
-   if (x == defaultVal)
-   {
-      for (iter = rows[r].begin(); iter != rows[r].end(); iter++)
-      {
-         if (c == (*iter).getCol())
-         {
-            rows[r].erase(iter);
-            return true;
-         }
-      }
-   }
-
-   else
-   {
-      for (iter = rows[r].begin(); iter != rows[r].end(); iter++)
-      {
-         if (c == (*iter).getCol())
-         {
-            (*iter).data = x;
-            return true;
-         }
-      }
-      rows[r].push_back(newNode);
-      return true;
-   }
-   return false;
-}
-
-template <class Object>
-void SparseMat<Object>::clear()
-{
-   typename MatRow::iterator iter;
-
-   for (int i = 0; i < rows.size(); i++)
-   {
-      for (iter = rows[i].begin(); iter != rows[i].end(); iter++)
-      {
-         (*iter).data = defaultVal;
-      }
-   }
-}
-
-template <class Object>
-void SparseMat<Object>::showSubSquare(int start, int size)
-{
-   for (int i = start; i <= (start + size - 1); i++)
-   {
-      for (int j = start; j <= (start + size - 1); j++)
-      {
-         cout << this->get(i, j) << " ";
-      }
-      cout << endl;
-   }
-   cout << endl << endl;
-}
 
 /* ------------------- run ------------------------
  
